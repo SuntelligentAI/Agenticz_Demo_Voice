@@ -107,26 +107,26 @@ describe('getCallForUser', () => {
     expect(r.ok).toBe(true);
     expect(r.data).toEqual({
       id: 'call-1',
-      userId: 'user-1',
+      status: 'dialing',
+      outcome: null,
       agentName: 'Sarah',
       companyName: 'Acme Roofing',
-      companyDescription: 'We install commercial flat roofs across the UK.',
-      callPurpose: 'Follow up on their enquiry.',
       prospectName: 'John',
       prospectPhone: '+447700900000',
       retellCallId: 'retell-abc',
-      status: 'dialing',
-      outcome: null,
-      transcript: null,
-      recordingUrl: null,
-      aiSummary: null,
-      capturedFields: null,
-      notes: null,
       createdAt: 1_700_000_000_000,
       startedAt: null,
       endedAt: null,
       durationSeconds: null,
     });
+    // Private fields are NOT exposed by this endpoint.
+    expect(r.data).not.toHaveProperty('userId');
+    expect(r.data).not.toHaveProperty('companyDescription');
+    expect(r.data).not.toHaveProperty('callPurpose');
+    expect(r.data).not.toHaveProperty('transcript');
+    expect(r.data).not.toHaveProperty('recordingUrl');
+    expect(r.data).not.toHaveProperty('aiSummary');
+    expect(r.data).not.toHaveProperty('notes');
   });
 
   it('returns 404 when callId is missing', async () => {

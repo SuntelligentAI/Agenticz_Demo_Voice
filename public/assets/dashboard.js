@@ -12,7 +12,9 @@ const RULES = {
 const FIELD_KEYS = Object.keys(RULES);
 
 const POLL_INTERVAL_MS = 3000;
-const POLL_MAX_MS = 90_000;
+const POLL_MAX_MS = 15 * 60 * 1000;
+const POLL_TERMINAL_TAIL_MS = 10_000;
+const TERMINAL_STATUSES = new Set(['ended', 'failed']);
 
 function clean(value) {
   if (typeof value !== 'string') return '';
@@ -65,28 +67,69 @@ function formatTime(ms) {
   }
 }
 
+function formatDuration(seconds) {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) {
+    return null;
+  }
+  const s = Math.round(seconds);
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, '0')}`;
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case 'dialing':
+      return 'Dialing';
+    case 'in_progress':
+      return 'On call';
+    case 'ended':
+      return 'Ended';
+    case 'failed':
+      return 'Failed';
+    default:
+      return status || 'Pending';
+  }
+}
+
+function statusSubtext(row) {
+  switch (row.status) {
+    case 'dialing':
+      return 'Dialing… waiting for the prospect to pick up.';
+    case 'in_progress':
+      return 'Call connected — on the line with the prospect.';
+    case 'ended':
+      return row.outcome
+        ? `Call ended — outcome: ${row.outcome}.`
+        : 'Call ended.';
+    case 'failed':
+      return 'Could not place the call.';
+    default:
+      return 'Starting…';
+  }
+}
+
 function setStatus(row) {
   const pill = document.getElementById('status-pill');
-  pill.textContent = row.status || 'pending';
-  pill.classList.remove('dialing', 'ended', 'failed');
-  if (row.status === 'dialing') pill.classList.add('dialing');
-  else if (row.status === 'failed') pill.classList.add('failed');
-  else if (row.status) pill.classList.add('ended');
+  pill.textContent = statusLabel(row.status);
+  pill.classList.remove('dialing', 'in_progress', 'ended', 'failed');
+  if (row.status) pill.classList.add(row.status);
 
-  document.getElementById('status-sub').textContent =
-    row.status === 'dialing'
-      ? 'Dialing… waiting for the prospect to pick up.'
-      : row.status === 'failed'
-        ? 'Could not place the call.'
-        : `Call ${row.status}.`;
+  document.getElementById('status-sub').textContent = statusSubtext(row);
+
+  document.getElementById('status-outcome').textContent = row.outcome || '—';
+  document.getElementById('status-duration').textContent =
+    formatDuration(row.durationSeconds) || '—';
 
   document.getElementById('status-prospect').textContent =
     row.prospectName && row.prospectPhone
       ? `${row.prospectName} (${row.prospectPhone})`
       : '—';
-  document.getElementById('status-started').textContent = row.createdAt
-    ? formatTime(row.createdAt)
-    : '—';
+  document.getElementById('status-started').textContent = row.startedAt
+    ? formatTime(row.startedAt)
+    : row.createdAt
+      ? formatTime(row.createdAt)
+      : '—';
   document.getElementById('status-retell-id').textContent =
     row.retellCallId || '—';
 }
@@ -101,6 +144,7 @@ function hideStatusCard() {
 
 let pollTimer = null;
 let pollDeadline = 0;
+let terminalAt = 0;
 
 function stopPolling() {
   if (pollTimer) {
@@ -122,10 +166,16 @@ async function pollCall(id) {
     const row = await res.json();
     setStatus(row);
 
-    if (row.status !== 'dialing') {
-      stopPolling();
-      return;
+    if (TERMINAL_STATUSES.has(row.status)) {
+      if (!terminalAt) terminalAt = Date.now();
+      if (Date.now() - terminalAt >= POLL_TERMINAL_TAIL_MS) {
+        stopPolling();
+        return;
+      }
+    } else {
+      terminalAt = 0;
     }
+
     if (Date.now() >= pollDeadline) {
       stopPolling();
       return;
@@ -142,6 +192,7 @@ async function pollCall(id) {
 
 function startPolling(id) {
   stopPolling();
+  terminalAt = 0;
   pollDeadline = Date.now() + POLL_MAX_MS;
   pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
 }

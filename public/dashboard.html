@@ -242,7 +242,8 @@
         color: var(--muted);
       }
 
-      .status-pill.dialing {
+      .status-pill.dialing,
+      .status-pill.in_progress {
         border-color: var(--gold);
         color: var(--gold);
       }
@@ -316,6 +317,10 @@
         <dl class="status-row">
           <dt>Status</dt>
           <dd><span class="status-pill" id="status-pill">pending</span></dd>
+          <dt>Outcome</dt>
+          <dd id="status-outcome">—</dd>
+          <dt>Duration</dt>
+          <dd id="status-duration">—</dd>
           <dt>Prospect</dt>
           <dd id="status-prospect">—</dd>
           <dt>Started</dt>
