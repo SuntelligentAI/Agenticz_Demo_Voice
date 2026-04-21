@@ -169,4 +169,113 @@ describe('performLogin', () => {
     });
     expect(ok.ok).toBe(true);
   });
+
+  it('successful login clears the counter for that IP', async () => {
+    const ip = '7.7.7.7';
+    for (let i = 0; i < 4; i++) {
+      const r = await auth.performLogin({
+        email,
+        password: 'wrong',
+        ip,
+        db,
+      });
+      expect(r.status).toBe(401);
+    }
+    const good = await auth.performLogin({ email, password, ip, db });
+    expect(good.ok).toBe(true);
+
+    // counter is reset — we should get a fresh budget of 5 failures
+    for (let i = 0; i < 5; i++) {
+      const r = await auth.performLogin({
+        email,
+        password: 'wrong',
+        ip,
+        db,
+      });
+      expect(r.status).toBe(401);
+    }
+    const blocked = await auth.performLogin({ email, password, ip, db });
+    expect(blocked.status).toBe(429);
+  });
+
+  it('block lifts after the 5-minute window expires', async () => {
+    const ip = '8.8.8.8';
+    let now = 1_000_000;
+    const clock = () => now;
+
+    for (let i = 0; i < 5; i++) {
+      const r = await auth.performLogin({
+        email,
+        password: 'wrong',
+        ip,
+        db,
+        clock,
+      });
+      expect(r.status).toBe(401);
+    }
+
+    const blocked = await auth.performLogin({
+      email,
+      password,
+      ip,
+      db,
+      clock,
+    });
+    expect(blocked.status).toBe(429);
+
+    // advance 5 min + 1 ms
+    now += 5 * 60 * 1000 + 1;
+
+    const unlocked = await auth.performLogin({
+      email,
+      password,
+      ip,
+      db,
+      clock,
+    });
+    expect(unlocked.ok).toBe(true);
+  });
+});
+
+describe('rate limiter primitives', () => {
+  beforeEach(() => auth._resetRateLimiter());
+
+  it('cleanupRateLimiter removes stale entries across all IPs', () => {
+    let now = 1_000_000;
+    auth.recordFailure('ip1', now);
+    auth.recordFailure('ip2', now);
+    auth.recordFailure('ip3', now);
+    expect(auth._rateLimiterSize()).toBe(3);
+
+    // advance past the window
+    now += 5 * 60 * 1000 + 1;
+    auth.cleanupRateLimiter(now);
+
+    expect(auth._rateLimiterSize()).toBe(0);
+  });
+
+  it('cleanupRateLimiter keeps entries that are still in-window', () => {
+    const base = 2_000_000;
+    auth.recordFailure('fresh', base);
+    auth.recordFailure('stale', base - (5 * 60 * 1000 + 1));
+    expect(auth._rateLimiterSize()).toBe(2);
+
+    auth.cleanupRateLimiter(base);
+
+    expect(auth._rateLimiterSize()).toBe(1);
+    expect(auth.checkRateLimit('fresh', base).allowed).toBe(true);
+    expect(auth.checkRateLimit('stale', base).allowed).toBe(true);
+  });
+
+  it('checkRateLimit prunes old entries for the queried IP on access', () => {
+    const base = 3_000_000;
+    // 3 very old failures, well outside the window
+    const old = base - (10 * 60 * 1000);
+    for (let i = 0; i < 3; i++) auth.recordFailure('ip', old);
+    expect(auth._rateLimiterSize()).toBe(1);
+
+    const r = auth.checkRateLimit('ip', base);
+    expect(r.allowed).toBe(true);
+    expect(auth._rateLimiterSize()).toBe(0);
+  });
 });
