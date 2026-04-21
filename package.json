@@ -1,0 +1,16 @@
+{
+  "name": "agenticz-demo-voice",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Agenticz Demo Voice — private back-office dashboard for triggering live AI voice demo calls via Retell.",
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vercel": "^39.0.0",
+    "vitest": "^2.1.0"
+  }
+}
