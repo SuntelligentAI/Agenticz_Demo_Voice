@@ -6,6 +6,7 @@
 // Body parsing is disabled so the raw body is available for HMAC verification
 // — once JSON.parse has rewritten the bytes, the signature cannot be checked.
 
+import { createHmac } from 'node:crypto';
 import { getDb } from '../../lib/db.js';
 import {
   verifyRetellSignature,
@@ -25,6 +26,40 @@ function getRawBody(req) {
   });
 }
 
+function isSignatureHeaderName(name) {
+  const n = String(name).toLowerCase();
+  return (
+    n.includes('signature') ||
+    n.includes('retell') ||
+    n === 'x-sig' ||
+    n === 'sig'
+  );
+}
+
+function collectSignatureHeaders(headers) {
+  const out = {};
+  for (const [k, v] of Object.entries(headers)) {
+    if (isSignatureHeaderName(k)) out[k] = v;
+  }
+  return out;
+}
+
+function describeSignature(signature) {
+  if (typeof signature !== 'string') {
+    return { present: false };
+  }
+  const hasV1Prefix = signature.startsWith('v1=');
+  const hexPart = hasV1Prefix ? signature.slice(3) : signature;
+  const looksHex = /^[0-9a-f]+$/i.test(hexPart);
+  return {
+    present: true,
+    length: signature.length,
+    hasV1Prefix,
+    hexLength: hexPart.length,
+    looksHex,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -32,22 +67,81 @@ export default async function handler(req, res) {
   }
 
   const secret = process.env.RETELL_WEBHOOK_SECRET;
-  if (!secret) {
-    console.error('[webhook] RETELL_WEBHOOK_SECRET is not set');
-    return res.status(500).json({ error: 'Server misconfigured' });
-  }
 
-  let rawBody;
+  let rawBody = '';
   try {
     rawBody = await getRawBody(req);
   } catch {
+    console.log(
+      '[retell-webhook] failed to read raw body',
+      JSON.stringify({ method: req.method, url: req.url }),
+    );
     return res.status(400).json({ error: 'Invalid request' });
   }
 
-  const header = req.headers['x-retell-signature'];
-  const signature = Array.isArray(header) ? header[0] : header;
+  // --- Diagnostic block — runs before signature verification ---------------
+  // Logs metadata only (header names, byte lengths). Never logs the webhook
+  // secret, the Turso token, or the JWT secret. Signature-related headers are
+  // logged in full because they arrive from the public request and are
+  // useless without the secret.
+  console.log(
+    '[retell-webhook] request received',
+    JSON.stringify({
+      method: req.method,
+      url: req.url,
+      headerNames: Object.keys(req.headers),
+      signatureHeaders: collectSignatureHeaders(req.headers),
+      rawBodyBytes: Buffer.byteLength(rawBody, 'utf8'),
+      secretSet: Boolean(secret),
+      secretByteLength: secret ? Buffer.byteLength(secret, 'utf8') : 0,
+    }),
+  );
+  // -------------------------------------------------------------------------
 
-  if (!signature || !verifyRetellSignature(rawBody, signature, secret)) {
+  if (!secret) {
+    console.error('[retell-webhook] RETELL_WEBHOOK_SECRET is not set');
+    return res.status(500).json({ error: 'Server misconfigured' });
+  }
+
+  const HEADER_NAME = 'x-retell-signature';
+  const headerValue = req.headers[HEADER_NAME];
+  const signature = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+
+  if (!signature) {
+    console.log(
+      '[retell-webhook] verify failed: missing signature header',
+      JSON.stringify({
+        headerNameChecked: HEADER_NAME,
+        headerNamesPresent: Object.keys(req.headers),
+      }),
+    );
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  if (!verifyRetellSignature(rawBody, signature, secret)) {
+    // Diagnose: is the format right but value wrong (wrong secret / body
+    // differs), or is the format itself malformed?
+    const expectedHex = createHmac('sha256', secret)
+      .update(rawBody)
+      .digest('hex');
+    const sigShape = describeSignature(signature);
+    const reason =
+      !sigShape.looksHex
+        ? 'signature is not hex'
+        : sigShape.hexLength !== expectedHex.length
+          ? 'signature length mismatch'
+          : 'hmac mismatch (likely wrong secret or altered body)';
+
+    console.log(
+      '[retell-webhook] verify failed: ' + reason,
+      JSON.stringify({
+        headerName: HEADER_NAME,
+        signatureReceived: signature,
+        signatureShape: sigShape,
+        expectedHexLength: expectedHex.length,
+        rawBodyBytes: Buffer.byteLength(rawBody, 'utf8'),
+      }),
+    );
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
@@ -55,6 +149,7 @@ export default async function handler(req, res) {
   try {
     payload = JSON.parse(rawBody);
   } catch {
+    console.log('[retell-webhook] invalid JSON after successful signature verify');
     return res.status(400).json({ error: 'Invalid JSON' });
   }
 
