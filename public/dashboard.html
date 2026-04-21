@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>Dashboard — Agenticz Demo Voice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/brand.css" />
+    <style>
+      body {
+        visibility: hidden;
+      }
+      body.ready,
+      body.redirecting {
+        visibility: visible;
+      }
+
+      .topbar .right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .user-email {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+      }
+
+      .logout {
+        background: transparent;
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 8px 14px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: border-color 120ms ease, color 120ms ease;
+      }
+
+      .logout:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 64px 24px;
+        gap: 16px;
+        text-align: center;
+      }
+
+      main h1 {
+        font-size: clamp(32px, 5vw, 56px);
+        font-weight: 300;
+      }
+
+      main .sub {
+        color: var(--muted);
+        font-size: 14px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      footer {
+        padding: 20px;
+        border-top: 1px solid var(--line);
+        text-align: center;
+      }
+
+      footer .status {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="logo" aria-label="Agenticz">
+        <span class="slashes" aria-hidden="true">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </span>
+        <span class="wordmark">AGENTIC<span class="z">Z</span></span>
+      </div>
+      <div class="right">
+        <span class="user-email" id="user-email"></span>
+        <button type="button" class="logout" id="logout">Log out</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="sub">Admin · Demo Voice</div>
+      <h1>Welcome — <span class="accent">Phase 2 coming</span></h1>
+    </main>
+
+    <footer>
+      <div class="status">Session active</div>
+    </footer>
+
+    <script src="/assets/dashboard.js" defer></script>
+  </body>
+</html>

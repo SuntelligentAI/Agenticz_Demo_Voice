@@ -7,10 +7,18 @@
   "scripts": {
     "dev": "vercel dev",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate": "node --env-file=.env scripts/migrate.js",
+    "db:seed": "node --env-file=.env scripts/seed-user.js"
   },
   "devDependencies": {
     "vercel": "^39.0.0",
     "vitest": "^2.1.0"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.17.2",
+    "bcryptjs": "^3.0.3",
+    "cookie": "^1.1.1",
+    "jose": "^6.2.2"
   }
 }

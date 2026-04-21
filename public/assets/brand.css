@@ -1,0 +1,121 @@
+:root {
+  --bg: #050505;
+  --fg: #f5f5f5;
+  --muted: #8a8a8a;
+  --line: #1a1a1a;
+  --surface: #0c0c0c;
+  --surface-hi: #121212;
+  --slash-dark: #252525;
+  --slash-mid: #7a5500;
+  --gold: #ffb800;
+  --gold-hi: #ffc733;
+  --danger: #ff6b4a;
+  --radius: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: "Outfit", system-ui, -apple-system, Segoe UI, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.slashes {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.slashes span {
+  display: block;
+  width: 8px;
+  height: 30px;
+  transform: skewX(-18deg);
+  border-radius: 2px;
+}
+
+.slashes .s1 {
+  background: var(--slash-dark);
+}
+.slashes .s2 {
+  background: var(--slash-mid);
+}
+.slashes .s3 {
+  background: var(--gold);
+}
+
+.wordmark {
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  letter-spacing: 0.22em;
+  color: var(--fg);
+  line-height: 1;
+}
+
+.wordmark .z {
+  color: var(--gold);
+}
+
+.topbar {
+  padding: 24px 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--muted);
+}
+
+h1 {
+  margin: 0;
+  font-family: "Outfit", sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+h1 .accent {
+  color: var(--gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>Sign in — Agenticz Demo Voice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/brand.css" />
+    <style>
+      .topbar .right {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.3em;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 380px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      .heading-block {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .heading-block h1 {
+        font-size: 32px;
+      }
+
+      .heading-block p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      label {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      input {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--fg);
+        padding: 0 14px;
+        min-height: 44px;
+        border-radius: var(--radius);
+        font: inherit;
+        font-size: 15px;
+        transition: border-color 120ms ease, background 120ms ease;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: var(--gold);
+        background: var(--surface-hi);
+      }
+
+      input:disabled {
+        opacity: 0.6;
+      }
+
+      button[type="submit"] {
+        margin-top: 8px;
+        min-height: 44px;
+        background: var(--gold);
+        color: #050505;
+        border: none;
+        border-radius: var(--radius);
+        font-family: "Outfit", sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: background 120ms ease, transform 120ms ease;
+      }
+
+      button[type="submit"]:hover:not(:disabled) {
+        background: var(--gold-hi);
+      }
+
+      button[type="submit"]:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+
+      button[type="submit"]:disabled {
+        opacity: 0.7;
+        cursor: progress;
+      }
+
+      .error {
+        min-height: 20px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--danger);
+        letter-spacing: 0.03em;
+      }
+
+      footer {
+        padding: 20px;
+        border-top: 1px solid var(--line);
+        text-align: center;
+      }
+
+      footer .status {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="logo" aria-label="Agenticz">
+        <span class="slashes" aria-hidden="true">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </span>
+        <span class="wordmark">AGENTIC<span class="z">Z</span></span>
+      </div>
+      <div class="right">Admin</div>
+    </header>
+
+    <main>
+      <section class="card">
+        <div class="heading-block">
+          <h1>Sign in</h1>
+          <p>Agenticz Demo Voice — operator access.</p>
+        </div>
+
+        <form id="login-form" novalidate>
+          <div class="field">
+            <label for="email">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="username"
+              required
+              autofocus
+            />
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+          <button type="submit" id="submit">Sign in</button>
+          <div class="error" id="error" role="alert" aria-live="polite"></div>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <div class="status">Phase 1 · authenticated sessions</div>
+    </footer>
+
+    <script src="/assets/login.js" defer></script>
+  </body>
+</html>
