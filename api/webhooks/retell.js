@@ -11,6 +11,7 @@ import {
   verifyRetellSignature,
   describeRetellSignature,
   diagnoseHmacInputs,
+  tryHmacOrderings,
   applyWebhookEvent,
 } from '../../lib/retell-webhook.js';
 
@@ -126,6 +127,11 @@ export default async function handler(req, res) {
     console.log(
       '[retell-webhook] hmac inputs',
       JSON.stringify(diagnoseHmacInputs(rawBody, signature, secret)),
+    );
+
+    console.log(
+      '[retell-webhook] hmac candidates',
+      JSON.stringify(tryHmacOrderings(rawBody, signature, secret)),
     );
 
     return res.status(401).json({ error: 'Invalid signature' });
