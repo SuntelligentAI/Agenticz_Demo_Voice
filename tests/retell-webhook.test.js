@@ -11,12 +11,12 @@ const SECRET = 'test-webhook-secret-at-least-32-bytes-long!';
 function signBody(rawBody, timestamp = Date.now(), secret = SECRET) {
   const digest = createHmac('sha256', secret)
     .update(rawBody + String(timestamp))
-    .digest('base64');
+    .digest('hex');
   return `v=${timestamp},d=${digest}`;
 }
 
 describe('verifyRetellSignature', () => {
-  it('accepts a valid v=<ts>,d=<base64-hmac> signature', () => {
+  it('accepts a valid v=<ts>,d=<hex-hmac> signature', () => {
     const body = '{"event":"call_started","call":{"call_id":"c1"}}';
     const sig = signBody(body);
     expect(verifyRetellSignature(body, sig, SECRET)).toBe(true);
