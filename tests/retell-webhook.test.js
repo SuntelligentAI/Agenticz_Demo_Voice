@@ -9,10 +9,9 @@ import {
 const SECRET = 'test-webhook-secret-at-least-32-bytes-long!';
 
 function signBody(rawBody, timestamp = Date.now(), secret = SECRET) {
-  const hmac = createHmac('sha256', secret);
-  hmac.update(rawBody);
-  hmac.update(String(timestamp));
-  const digest = hmac.digest('base64');
+  const digest = createHmac('sha256', secret)
+    .update(rawBody + String(timestamp))
+    .digest('base64');
   return `v=${timestamp},d=${digest}`;
 }
 
