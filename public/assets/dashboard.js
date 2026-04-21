@@ -12,6 +12,7 @@ const RULES = {
 const FIELD_KEYS = Object.keys(RULES);
 
 const POLL_INTERVAL_MS = 3000;
+const POLL_FIRST_MS = 500;
 const POLL_MAX_MS = 15 * 60 * 1000;
 const POLL_TERMINAL_TAIL_MS = 10_000;
 const TERMINAL_STATUSES = new Set(['ended', 'failed']);
@@ -79,8 +80,9 @@ function formatDuration(seconds) {
 
 function statusLabel(status) {
   switch (status) {
+    case 'pending':
     case 'dialing':
-      return 'Dialing';
+      return 'Dialling…';
     case 'in_progress':
       return 'On call';
     case 'ended':
@@ -88,14 +90,15 @@ function statusLabel(status) {
     case 'failed':
       return 'Failed';
     default:
-      return status || 'Pending';
+      return 'Dialling…';
   }
 }
 
 function statusSubtext(row) {
   switch (row.status) {
+    case 'pending':
     case 'dialing':
-      return 'Dialing… waiting for the prospect to pick up.';
+      return 'Dialling… waiting for the prospect to pick up.';
     case 'in_progress':
       return 'Call connected — on the line with the prospect.';
     case 'ended':
@@ -103,7 +106,9 @@ function statusSubtext(row) {
         ? `Call ended — outcome: ${row.outcome}.`
         : 'Call ended.';
     case 'failed':
-      return 'Could not place the call.';
+      return row.outcome
+        ? `Call failed — ${row.outcome}.`
+        : 'Could not place the call.';
     default:
       return 'Starting…';
   }
@@ -113,7 +118,9 @@ function setStatus(row) {
   const pill = document.getElementById('status-pill');
   pill.textContent = statusLabel(row.status);
   pill.classList.remove('dialing', 'in_progress', 'ended', 'failed');
-  if (row.status) pill.classList.add(row.status);
+  // 'pending' shares the dialing visual — they're both pre-pickup states.
+  const pillClass = row.status === 'pending' ? 'dialing' : row.status;
+  if (pillClass) pill.classList.add(pillClass);
 
   document.getElementById('status-sub').textContent = statusSubtext(row);
 
@@ -153,48 +160,100 @@ function stopPolling() {
   }
 }
 
-async function pollCall(id) {
-  try {
-    const res = await fetch(`/api/calls/${encodeURIComponent(id)}`, {
-      credentials: 'same-origin',
-    });
-    if (res.status === 401) {
-      location.replace('/login');
-      return;
-    }
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const row = await res.json();
-    setStatus(row);
+function showNewCallButton() {
+  const btn = document.getElementById('new-call');
+  if (btn) btn.hidden = false;
+}
 
-    if (TERMINAL_STATUSES.has(row.status)) {
-      if (!terminalAt) terminalAt = Date.now();
-      if (Date.now() - terminalAt >= POLL_TERMINAL_TAIL_MS) {
-        stopPolling();
-        return;
-      }
-    } else {
-      terminalAt = 0;
-    }
+function hideNewCallButton() {
+  const btn = document.getElementById('new-call');
+  if (btn) btn.hidden = true;
+}
 
-    if (Date.now() >= pollDeadline) {
-      stopPolling();
-      return;
-    }
-    pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
-  } catch {
-    if (Date.now() >= pollDeadline) {
-      stopPolling();
-      return;
-    }
-    pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+function onPollingStopped(reason) {
+  showNewCallButton();
+  const sub = document.getElementById('status-sub');
+  if (!sub) return;
+  if (reason === 'not_found') {
+    sub.textContent =
+      'Call not found. It may have been deleted. Click New call to start another.';
+  } else if (reason === 'deadline') {
+    sub.textContent =
+      'Live updates timed out. Click New call to continue.';
+  } else if (reason === 'error') {
+    sub.textContent =
+      'Live updates paused after repeated errors. Click New call to continue.';
   }
+  // reason === 'terminal' leaves the existing subtext ("Call ended — ...") in place.
+}
+
+function scheduleNextPoll(id) {
+  if (Date.now() >= pollDeadline) {
+    stopPolling();
+    onPollingStopped('deadline');
+    return;
+  }
+  pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+}
+
+async function pollCall(id) {
+  let res;
+  try {
+    res = await fetch(`/api/calls/${encodeURIComponent(id)}`, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+  } catch {
+    // Network blip — keep trying until the deadline.
+    scheduleNextPoll(id);
+    return;
+  }
+
+  if (res.status === 401) {
+    location.replace('/login');
+    return;
+  }
+  if (res.status === 404) {
+    stopPolling();
+    onPollingStopped('not_found');
+    return;
+  }
+  if (!res.ok) {
+    scheduleNextPoll(id);
+    return;
+  }
+
+  let row;
+  try {
+    row = await res.json();
+  } catch {
+    scheduleNextPoll(id);
+    return;
+  }
+
+  setStatus(row);
+
+  if (TERMINAL_STATUSES.has(row.status)) {
+    if (!terminalAt) terminalAt = Date.now();
+    if (Date.now() - terminalAt >= POLL_TERMINAL_TAIL_MS) {
+      stopPolling();
+      onPollingStopped('terminal');
+      return;
+    }
+  } else {
+    terminalAt = 0;
+  }
+
+  scheduleNextPoll(id);
 }
 
 function startPolling(id) {
   stopPolling();
   terminalAt = 0;
   pollDeadline = Date.now() + POLL_MAX_MS;
-  pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+  // Fire the first poll quickly so the UI reflects server state almost
+  // immediately, but leave a beat for the DB write to settle.
+  pollTimer = setTimeout(() => pollCall(id), POLL_FIRST_MS);
 }
 
 function setFormDisabled(disabled, submitLabel) {
@@ -250,8 +309,10 @@ function wireNewCall() {
   document.getElementById('new-call').addEventListener('click', () => {
     stopPolling();
     hideStatusCard();
+    hideNewCallButton();
     setFormError('');
     clearAllFieldErrors();
+    setFormDisabled(false, 'Call now');
     document.getElementById('agentName')?.focus();
   });
 }
@@ -293,49 +354,53 @@ function wireForm() {
 
     setFormDisabled(true, 'Starting call…');
 
+    let res;
+    let body = {};
     try {
-      const res = await fetch('/api/calls/start', {
+      res = await fetch('/api/calls/start', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(inputs),
       });
-
-      if (res.status === 401) {
-        location.replace('/login');
-        return;
-      }
-
-      const body = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        const errorMessage =
-          body?.error ||
-          (res.status === 429
-            ? 'Too many call attempts, please wait a few minutes.'
-            : res.status === 502
-              ? 'Could not place call. Try again.'
-              : 'Could not start the call.');
-        setFormError(errorMessage);
-        return;
-      }
-
-      // Success — show status card, start polling.
-      const optimisticRow = {
-        status: 'dialing',
-        prospectName: clean(inputs.prospectName),
-        prospectPhone: clean(inputs.prospectPhone),
-        createdAt: Date.now(),
-        retellCallId: body.retellCallId,
-      };
-      setStatus(optimisticRow);
-      showStatusCard();
-      startPolling(body.id);
+      body = await res.json().catch(() => ({}));
     } catch {
       setFormError('Network error. Please try again.');
-    } finally {
       setFormDisabled(false, 'Call now');
+      return;
     }
+
+    if (res.status === 401) {
+      location.replace('/login');
+      return;
+    }
+
+    if (!res.ok) {
+      const errorMessage =
+        body?.error ||
+        (res.status === 429
+          ? 'Too many call attempts, please wait a few minutes.'
+          : res.status === 502
+            ? 'Could not place call. Try again.'
+            : 'Could not start the call.');
+      setFormError(errorMessage);
+      setFormDisabled(false, 'Call now');
+      return;
+    }
+
+    // Success — show status card immediately, keep form disabled, poll.
+    const optimisticRow = {
+      status: 'dialing',
+      prospectName: clean(inputs.prospectName),
+      prospectPhone: clean(inputs.prospectPhone),
+      createdAt: Date.now(),
+      retellCallId: body.retellCallId,
+    };
+    setStatus(optimisticRow);
+    showStatusCard();
+    hideNewCallButton();
+    setFormDisabled(true, 'Call in progress…');
+    startPolling(body.id);
   });
 }
 
