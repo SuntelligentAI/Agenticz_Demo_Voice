@@ -4,7 +4,7 @@ Private back-office dashboard for triggering live AI voice demo calls through Re
 
 - **Final domain:** demo.agenticz.io
 - **Stack:** static HTML + Vercel serverless functions (Node.js, ES modules). No framework, no build step.
-- **Status:** Phase 1 — email + password auth (JWT sessions, Turso-backed users, rate-limited login).
+- **Status:** Phase 2 — Retell API client + demo-call schema (dashboard UI lands in Phase 3).
 
 ## Project layout
 
@@ -27,13 +27,16 @@ Agenticz_Demo_Voice/
 │       └── me.js           # GET  /api/auth/me
 ├── lib/
 │   ├── db.js               # Turso client singleton
-│   └── auth.js             # bcrypt, JWT, cookie helpers, rate limiter, performLogin
+│   ├── auth.js             # bcrypt, JWT, cookie helpers, rate limiter, performLogin
+│   └── retell.js           # Retell API client (createPhoneCall, getCall, getAgent, updateRetellLlm)
 ├── scripts/
-│   ├── migrate.js          # Creates the users table
-│   └── seed-user.js        # Seeds the single admin user from env
+│   ├── migrate.js          # Creates users, demo_calls, call_events tables
+│   ├── seed-user.js        # Seeds the single admin user from env
+│   └── setup-retell-agent.js # One-time: updates the Retell agent's LLM prompt + greeting
 ├── tests/
 │   ├── health.test.js
-│   └── auth.test.js
+│   ├── auth.test.js
+│   └── retell.test.js
 ├── .env.example
 ├── .gitignore
 ├── package.json
@@ -92,20 +95,30 @@ AUTH_SESSION_TTL_SECONDS=28800
 
 ADMIN_EMAIL=you@example.com
 ADMIN_PASSWORD=<12+ character strong password>
+
+RETELL_API_KEY=<from Retell dashboard → API Keys>
+RETELL_AGENT_ID=agent_<id from the AGENTICZ DEMOS folder>
+RETELL_FROM_NUMBER=+447xxxxxxxxx
+RETELL_WEBHOOK_SECRET=<openssl rand -base64 32>
 ```
 
-On Vercel, set the same variables in Project Settings → Environment Variables for all environments (Production, Preview, Development).
+`RETELL_WEBHOOK_SECRET` is generated now but not used until Phase 4 (webhook signature verification).
+
+On Vercel, set the same variables in Project Settings → Environment Variables for all environments (Production, Preview, Development). `ADMIN_EMAIL` / `ADMIN_PASSWORD` only belong in your local `.env` — they are used by `db:seed` and have no purpose in the serverless runtime.
 
 ## Migrate + seed
 
 After the `.env` file is filled in:
 
 ```bash
-npm run db:migrate    # creates the users table
+npm run db:migrate    # creates users, demo_calls, call_events (idempotent)
 npm run db:seed       # inserts / updates the admin user
+npm run retell:setup  # updates the Retell agent's prompt + greeting with {{dynamic}} vars
 ```
 
-Re-running `npm run db:seed` with a new `ADMIN_PASSWORD` rotates the password in place.
+- `db:migrate` is safe to re-run; all statements use `CREATE TABLE / INDEX IF NOT EXISTS`.
+- `db:seed` with a new `ADMIN_PASSWORD` rotates the password in place.
+- `retell:setup` fetches the agent referenced by `RETELL_AGENT_ID`, reads its `response_engine.llm_id`, and PATCHes that LLM's `general_prompt` and `begin_message`. Run it whenever the prompt template changes.
 
 ## Run locally
 
@@ -167,5 +180,6 @@ Production deploys run on Vercel via `git push` to `main`. Before the first Phas
 ## Roadmap
 
 - **Phase 0:** Foundation scaffold, security headers, health check.
-- **Phase 1 (this commit):** Auth — login, logout, `/api/auth/me`, Turso-backed users, JWT sessions, rate limiting.
-- **Phase 2+:** Retell voice demo orchestration.
+- **Phase 1:** Auth — login, logout, `/api/auth/me`, Turso-backed users, JWT sessions, rate limiting.
+- **Phase 2 (this commit):** Retell API client, `demo_calls` + `call_events` schema, one-time agent prompt setup script.
+- **Phase 3+:** Dashboard UI for triggering + reviewing demo calls.
