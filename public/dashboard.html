@@ -17,8 +17,7 @@
       body {
         visibility: hidden;
       }
-      body.ready,
-      body.redirecting {
+      body.ready {
         visibility: visible;
       }
 
@@ -35,7 +34,7 @@
         letter-spacing: 0.05em;
       }
 
-      .logout {
+      .btn-ghost {
         background: transparent;
         color: var(--fg);
         border: 1px solid var(--line);
@@ -49,33 +48,217 @@
         transition: border-color 120ms ease, color 120ms ease;
       }
 
-      .logout:hover {
+      .btn-ghost:hover {
         border-color: var(--gold);
         color: var(--gold);
       }
 
       main {
         flex: 1;
+        padding: 40px 28px 80px;
+        max-width: 960px;
+        margin: 0 auto;
+        width: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 64px 24px;
-        gap: 16px;
-        text-align: center;
+        gap: 24px;
       }
 
-      main h1 {
-        font-size: clamp(32px, 5vw, 56px);
-        font-weight: 300;
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 28px;
       }
 
-      main .sub {
+      .card-title {
+        margin: 0 0 4px;
+        font-family: "Outfit", sans-serif;
+        font-weight: 500;
+        font-size: 22px;
+        letter-spacing: -0.005em;
+      }
+
+      .card-sub {
+        margin: 0 0 24px;
         color: var(--muted);
-        font-size: 14px;
+        font-size: 13px;
         font-family: "JetBrains Mono", ui-monospace, monospace;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.04em;
+      }
+
+      form.call-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .field.full {
+        grid-column: 1 / -1;
+      }
+
+      label {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
         text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      input[type="text"],
+      input[type="tel"],
+      textarea {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        color: var(--fg);
+        padding: 12px 14px;
+        min-height: 44px;
+        border-radius: var(--radius);
+        font: inherit;
+        font-size: 15px;
+        transition: border-color 120ms ease, background 120ms ease;
+        resize: vertical;
+      }
+
+      textarea {
+        min-height: 96px;
+        line-height: 1.5;
+      }
+
+      input:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--gold);
+        background: var(--surface-hi);
+      }
+
+      input:disabled,
+      textarea:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .field-error {
+        min-height: 16px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--danger);
+        letter-spacing: 0.02em;
+      }
+
+      .field.has-error input,
+      .field.has-error textarea {
+        border-color: var(--danger);
+      }
+
+      .form-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 4px;
+      }
+
+      button.btn-primary {
+        min-height: 48px;
+        background: var(--gold);
+        color: #050505;
+        border: none;
+        border-radius: var(--radius);
+        font-family: "Outfit", sans-serif;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+        transition: background 120ms ease, transform 120ms ease;
+      }
+
+      button.btn-primary:hover:not(:disabled) {
+        background: var(--gold-hi);
+      }
+
+      button.btn-primary:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+
+      button.btn-primary:disabled {
+        opacity: 0.7;
+        cursor: progress;
+      }
+
+      .form-error {
+        min-height: 18px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--danger);
+        letter-spacing: 0.02em;
+      }
+
+      .status-card {
+        display: none;
+      }
+
+      .status-card.visible {
+        display: block;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: 170px 1fr;
+        gap: 8px 18px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+      }
+
+      .status-row dt {
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 11px;
+        align-self: center;
+      }
+
+      .status-row dd {
+        margin: 0;
+        color: var(--fg);
+        word-break: break-all;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--muted);
+      }
+
+      .status-pill.dialing {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+      .status-pill.ended {
+        border-color: var(--line);
+        color: var(--fg);
+      }
+      .status-pill.failed {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
+
+      .status-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
       }
 
       footer {
@@ -91,6 +274,19 @@
         letter-spacing: 0.2em;
         text-transform: uppercase;
       }
+
+      @media (max-width: 640px) {
+        form.call-form {
+          grid-template-columns: 1fr;
+        }
+        .status-row {
+          grid-template-columns: 1fr;
+          gap: 2px 0;
+        }
+        .status-row dt {
+          margin-top: 8px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -105,17 +301,132 @@
       </div>
       <div class="right">
         <span class="user-email" id="user-email"></span>
-        <button type="button" class="logout" id="logout">Log out</button>
+        <button type="button" class="btn-ghost" id="logout">Log out</button>
       </div>
     </header>
 
     <main>
-      <div class="sub">Admin · Demo Voice</div>
-      <h1>Welcome — <span class="accent">Phase 2 coming</span></h1>
+      <section
+        class="card status-card"
+        id="status-card"
+        aria-live="polite"
+      >
+        <h2 class="card-title">Live demo call</h2>
+        <p class="card-sub" id="status-sub">Starting…</p>
+        <dl class="status-row">
+          <dt>Status</dt>
+          <dd><span class="status-pill" id="status-pill">pending</span></dd>
+          <dt>Prospect</dt>
+          <dd id="status-prospect">—</dd>
+          <dt>Started</dt>
+          <dd id="status-started">—</dd>
+          <dt>Retell call ID</dt>
+          <dd id="status-retell-id">—</dd>
+        </dl>
+        <div class="status-actions">
+          <button type="button" class="btn-ghost" id="new-call">
+            New call
+          </button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">New demo call</h2>
+        <p class="card-sub">
+          Trigger a live outbound call through the Retell agent.
+        </p>
+
+        <form class="call-form" id="call-form" novalidate>
+          <div class="field">
+            <label for="agentName">Agent name</label>
+            <input
+              id="agentName"
+              name="agentName"
+              type="text"
+              maxlength="40"
+              autocomplete="off"
+              required
+            />
+            <div class="field-error" data-error-for="agentName"></div>
+          </div>
+
+          <div class="field">
+            <label for="companyName">Company name</label>
+            <input
+              id="companyName"
+              name="companyName"
+              type="text"
+              maxlength="80"
+              autocomplete="off"
+              required
+            />
+            <div class="field-error" data-error-for="companyName"></div>
+          </div>
+
+          <div class="field full">
+            <label for="companyDescription">Company description</label>
+            <textarea
+              id="companyDescription"
+              name="companyDescription"
+              maxlength="400"
+              rows="3"
+              required
+            ></textarea>
+            <div class="field-error" data-error-for="companyDescription"></div>
+          </div>
+
+          <div class="field full">
+            <label for="callPurpose">Call purpose</label>
+            <textarea
+              id="callPurpose"
+              name="callPurpose"
+              maxlength="400"
+              rows="3"
+              required
+            ></textarea>
+            <div class="field-error" data-error-for="callPurpose"></div>
+          </div>
+
+          <div class="field">
+            <label for="prospectName">Prospect name</label>
+            <input
+              id="prospectName"
+              name="prospectName"
+              type="text"
+              maxlength="60"
+              autocomplete="off"
+              required
+            />
+            <div class="field-error" data-error-for="prospectName"></div>
+          </div>
+
+          <div class="field">
+            <label for="prospectPhone">Prospect phone</label>
+            <input
+              id="prospectPhone"
+              name="prospectPhone"
+              type="tel"
+              inputmode="tel"
+              placeholder="+447700900000"
+              maxlength="16"
+              autocomplete="off"
+              required
+            />
+            <div class="field-error" data-error-for="prospectPhone"></div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="submit">
+              Call now
+            </button>
+            <div class="form-error" id="form-error" role="alert"></div>
+          </div>
+        </form>
+      </section>
     </main>
 
     <footer>
-      <div class="status">Session active</div>
+      <div class="status">Phase 3 · live demo trigger</div>
     </footer>
 
     <script src="/assets/dashboard.js" defer></script>

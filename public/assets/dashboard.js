@@ -1,25 +1,297 @@
-(async () => {
+// Client-side validation mirrors the server rules in lib/validation.js.
+// The server is the authority; these rules only exist for immediate UX feedback.
+const RULES = {
+  agentName: { min: 2, max: 40, pattern: /^[\p{L}\s'\-]+$/u, label: 'Agent name' },
+  companyName: { min: 2, max: 80, label: 'Company name' },
+  companyDescription: { min: 10, max: 400, label: 'Company description' },
+  callPurpose: { min: 10, max: 400, label: 'Call purpose' },
+  prospectName: { min: 2, max: 60, label: 'Prospect name' },
+  prospectPhone: { pattern: /^\+[1-9]\d{7,14}$/, label: 'Prospect phone' },
+};
+
+const FIELD_KEYS = Object.keys(RULES);
+
+const POLL_INTERVAL_MS = 3000;
+const POLL_MAX_MS = 90_000;
+
+function clean(value) {
+  if (typeof value !== 'string') return '';
+  return value.replace(/[\x00-\x1F\x7F]/g, '').trim();
+}
+
+function validateField(key, rawValue) {
+  const value = clean(rawValue);
+  const rule = RULES[key];
+  if (/[<>]/.test(value)) {
+    return `${rule.label} contains invalid characters.`;
+  }
+  if (key === 'prospectPhone') {
+    if (!value || !rule.pattern.test(value)) {
+      return 'Use international format, e.g. +447700900000.';
+    }
+    return null;
+  }
+  if (!value) return `${rule.label} is required.`;
+  if (value.length < rule.min)
+    return `${rule.label} must be at least ${rule.min} characters.`;
+  if (value.length > rule.max)
+    return `${rule.label} must be at most ${rule.max} characters.`;
+  if (rule.pattern && !rule.pattern.test(value)) {
+    return `${rule.label} contains unsupported characters.`;
+  }
+  return null;
+}
+
+function showFieldError(key, message) {
+  const errEl = document.querySelector(`[data-error-for="${key}"]`);
+  const fieldEl = document.getElementById(key)?.closest('.field');
+  if (errEl) errEl.textContent = message || '';
+  if (fieldEl) fieldEl.classList.toggle('has-error', Boolean(message));
+}
+
+function clearAllFieldErrors() {
+  for (const key of FIELD_KEYS) showFieldError(key, '');
+}
+
+function setFormError(message) {
+  document.getElementById('form-error').textContent = message || '';
+}
+
+function formatTime(ms) {
   try {
-    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    return new Date(ms).toLocaleString();
+  } catch {
+    return '';
+  }
+}
+
+function setStatus(row) {
+  const pill = document.getElementById('status-pill');
+  pill.textContent = row.status || 'pending';
+  pill.classList.remove('dialing', 'ended', 'failed');
+  if (row.status === 'dialing') pill.classList.add('dialing');
+  else if (row.status === 'failed') pill.classList.add('failed');
+  else if (row.status) pill.classList.add('ended');
+
+  document.getElementById('status-sub').textContent =
+    row.status === 'dialing'
+      ? 'Dialing… waiting for the prospect to pick up.'
+      : row.status === 'failed'
+        ? 'Could not place the call.'
+        : `Call ${row.status}.`;
+
+  document.getElementById('status-prospect').textContent =
+    row.prospectName && row.prospectPhone
+      ? `${row.prospectName} (${row.prospectPhone})`
+      : '—';
+  document.getElementById('status-started').textContent = row.createdAt
+    ? formatTime(row.createdAt)
+    : '—';
+  document.getElementById('status-retell-id').textContent =
+    row.retellCallId || '—';
+}
+
+function showStatusCard() {
+  document.getElementById('status-card').classList.add('visible');
+}
+
+function hideStatusCard() {
+  document.getElementById('status-card').classList.remove('visible');
+}
+
+let pollTimer = null;
+let pollDeadline = 0;
+
+function stopPolling() {
+  if (pollTimer) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+}
+
+async function pollCall(id) {
+  try {
+    const res = await fetch(`/api/calls/${encodeURIComponent(id)}`, {
+      credentials: 'same-origin',
+    });
     if (res.status === 401) {
       location.replace('/login');
       return;
     }
-    if (!res.ok) throw new Error(`Unexpected status ${res.status}`);
+    if (!res.ok) throw new Error(`status ${res.status}`);
+    const row = await res.json();
+    setStatus(row);
+
+    if (row.status !== 'dialing') {
+      stopPolling();
+      return;
+    }
+    if (Date.now() >= pollDeadline) {
+      stopPolling();
+      return;
+    }
+    pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+  } catch {
+    if (Date.now() >= pollDeadline) {
+      stopPolling();
+      return;
+    }
+    pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+  }
+}
+
+function startPolling(id) {
+  stopPolling();
+  pollDeadline = Date.now() + POLL_MAX_MS;
+  pollTimer = setTimeout(() => pollCall(id), POLL_INTERVAL_MS);
+}
+
+function setFormDisabled(disabled, submitLabel) {
+  for (const key of FIELD_KEYS) {
+    const el = document.getElementById(key);
+    if (el) el.disabled = disabled;
+  }
+  const submit = document.getElementById('submit');
+  submit.disabled = disabled;
+  if (submitLabel) submit.textContent = submitLabel;
+}
+
+function collectInputs() {
+  const out = {};
+  for (const key of FIELD_KEYS) {
+    const el = document.getElementById(key);
+    out[key] = el ? el.value : '';
+  }
+  return out;
+}
+
+async function loadMe() {
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
+    if (res.status === 401) {
+      location.replace('/login');
+      return null;
+    }
+    if (!res.ok) throw new Error(`status ${res.status}`);
     const data = await res.json();
     document.getElementById('user-email').textContent = data.email || '';
     document.body.classList.add('ready');
-
-    document.getElementById('logout').addEventListener('click', async () => {
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'same-origin',
-        });
-      } catch {}
-      location.replace('/login');
-    });
+    return data;
   } catch {
     location.replace('/login');
+    return null;
   }
+}
+
+function wireLogout() {
+  document.getElementById('logout').addEventListener('click', async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } catch {}
+    location.replace('/login');
+  });
+}
+
+function wireNewCall() {
+  document.getElementById('new-call').addEventListener('click', () => {
+    stopPolling();
+    hideStatusCard();
+    setFormError('');
+    clearAllFieldErrors();
+    document.getElementById('agentName')?.focus();
+  });
+}
+
+function wireForm() {
+  const form = document.getElementById('call-form');
+
+  for (const key of FIELD_KEYS) {
+    const el = document.getElementById(key);
+    if (!el) continue;
+    el.addEventListener('blur', () => {
+      const msg = validateField(key, el.value);
+      showFieldError(key, msg);
+    });
+    el.addEventListener('input', () => {
+      const errEl = document.querySelector(`[data-error-for="${key}"]`);
+      if (errEl?.textContent) showFieldError(key, '');
+    });
+  }
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    setFormError('');
+    clearAllFieldErrors();
+
+    const inputs = collectInputs();
+    let firstErrorKey = null;
+    for (const key of FIELD_KEYS) {
+      const msg = validateField(key, inputs[key]);
+      if (msg) {
+        showFieldError(key, msg);
+        if (!firstErrorKey) firstErrorKey = key;
+      }
+    }
+    if (firstErrorKey) {
+      document.getElementById(firstErrorKey)?.focus();
+      return;
+    }
+
+    setFormDisabled(true, 'Starting call…');
+
+    try {
+      const res = await fetch('/api/calls/start', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(inputs),
+      });
+
+      if (res.status === 401) {
+        location.replace('/login');
+        return;
+      }
+
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        const errorMessage =
+          body?.error ||
+          (res.status === 429
+            ? 'Too many call attempts, please wait a few minutes.'
+            : res.status === 502
+              ? 'Could not place call. Try again.'
+              : 'Could not start the call.');
+        setFormError(errorMessage);
+        return;
+      }
+
+      // Success — show status card, start polling.
+      const optimisticRow = {
+        status: 'dialing',
+        prospectName: clean(inputs.prospectName),
+        prospectPhone: clean(inputs.prospectPhone),
+        createdAt: Date.now(),
+        retellCallId: body.retellCallId,
+      };
+      setStatus(optimisticRow);
+      showStatusCard();
+      startPolling(body.id);
+    } catch {
+      setFormError('Network error. Please try again.');
+    } finally {
+      setFormDisabled(false, 'Call now');
+    }
+  });
+}
+
+(async () => {
+  const user = await loadMe();
+  if (!user) return;
+  wireLogout();
+  wireNewCall();
+  wireForm();
 })();
