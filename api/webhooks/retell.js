@@ -6,10 +6,10 @@
 // Body parsing is disabled so the raw body is available for HMAC verification
 // — once JSON.parse has rewritten the bytes, the signature cannot be checked.
 
-import { createHmac } from 'node:crypto';
 import { getDb } from '../../lib/db.js';
 import {
   verifyRetellSignature,
+  describeRetellSignature,
   applyWebhookEvent,
 } from '../../lib/retell-webhook.js';
 
@@ -42,22 +42,6 @@ function collectSignatureHeaders(headers) {
     if (isSignatureHeaderName(k)) out[k] = v;
   }
   return out;
-}
-
-function describeSignature(signature) {
-  if (typeof signature !== 'string') {
-    return { present: false };
-  }
-  const hasV1Prefix = signature.startsWith('v1=');
-  const hexPart = hasV1Prefix ? signature.slice(3) : signature;
-  const looksHex = /^[0-9a-f]+$/i.test(hexPart);
-  return {
-    present: true,
-    length: signature.length,
-    hasV1Prefix,
-    hexLength: hexPart.length,
-    looksHex,
-  };
 }
 
 export default async function handler(req, res) {
@@ -119,17 +103,13 @@ export default async function handler(req, res) {
   }
 
   if (!verifyRetellSignature(rawBody, signature, secret)) {
-    // Diagnose: is the format right but value wrong (wrong secret / body
-    // differs), or is the format itself malformed?
-    const expectedHex = createHmac('sha256', secret)
-      .update(rawBody)
-      .digest('hex');
-    const sigShape = describeSignature(signature);
-    const reason =
-      !sigShape.looksHex
-        ? 'signature is not hex'
-        : sigShape.hexLength !== expectedHex.length
-          ? 'signature length mismatch'
+    const sigShape = describeRetellSignature(signature);
+    const reason = !sigShape.present
+      ? 'signature missing'
+      : sigShape.format === 'unrecognized'
+        ? 'signature header format unrecognized (expected v=<ts>,d=<digest>)'
+        : !sigShape.withinSkewWindow
+          ? 'timestamp outside 5-minute skew window (replay protection)'
           : 'hmac mismatch (likely wrong secret or altered body)';
 
     console.log(
@@ -138,7 +118,6 @@ export default async function handler(req, res) {
         headerName: HEADER_NAME,
         signatureReceived: signature,
         signatureShape: sigShape,
-        expectedHexLength: expectedHex.length,
         rawBodyBytes: Buffer.byteLength(rawBody, 'utf8'),
       }),
     );

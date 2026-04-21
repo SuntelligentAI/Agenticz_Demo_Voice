@@ -8,20 +8,18 @@ import {
 
 const SECRET = 'test-webhook-secret-at-least-32-bytes-long!';
 
-function signBody(rawBody, secret = SECRET) {
-  return createHmac('sha256', secret).update(rawBody).digest('hex');
+function signBody(rawBody, timestamp = Date.now(), secret = SECRET) {
+  const hmac = createHmac('sha256', secret);
+  hmac.update(rawBody);
+  hmac.update(String(timestamp));
+  const digest = hmac.digest('base64');
+  return `v=${timestamp},d=${digest}`;
 }
 
 describe('verifyRetellSignature', () => {
-  it('accepts a valid HMAC-SHA256 hex signature', () => {
+  it('accepts a valid v=<ts>,d=<base64-hmac> signature', () => {
     const body = '{"event":"call_started","call":{"call_id":"c1"}}';
     const sig = signBody(body);
-    expect(verifyRetellSignature(body, sig, SECRET)).toBe(true);
-  });
-
-  it('accepts signatures with a "v1=" prefix', () => {
-    const body = '{"event":"call_ended","call":{"call_id":"c1"}}';
-    const sig = 'v1=' + signBody(body);
     expect(verifyRetellSignature(body, sig, SECRET)).toBe(true);
   });
 
@@ -31,10 +29,12 @@ describe('verifyRetellSignature', () => {
     expect(verifyRetellSignature(body + 'x', sig, SECRET)).toBe(false);
   });
 
-  it('rejects a tampered signature', () => {
+  it('rejects a tampered digest', () => {
     const body = '{"event":"call_started","call":{"call_id":"c1"}}';
     const sig = signBody(body);
-    const tampered = sig.slice(0, -2) + (sig.endsWith('0') ? '1' : '0') + sig.slice(-1);
+    const m = /^v=(\d+),d=(.+)$/.exec(sig);
+    const tamperedDigest = (m[2][0] === 'A' ? 'B' : 'A') + m[2].slice(1);
+    const tampered = `v=${m[1]},d=${tamperedDigest}`;
     expect(verifyRetellSignature(body, tampered, SECRET)).toBe(false);
   });
 
@@ -50,16 +50,58 @@ describe('verifyRetellSignature', () => {
     expect(verifyRetellSignature(body, sig, '')).toBe(false);
   });
 
-  it('rejects signatures of the wrong length (no buffer allocation crash)', () => {
+  it('rejects signatures in the wrong format', () => {
     const body = '{}';
     expect(verifyRetellSignature(body, 'abc', SECRET)).toBe(false);
-    expect(verifyRetellSignature(body, 'zz'.repeat(32), SECRET)).toBe(false);
+    expect(verifyRetellSignature(body, 'v1=deadbeef', SECRET)).toBe(false);
+    expect(verifyRetellSignature(body, 'deadbeef'.repeat(8), SECRET)).toBe(
+      false,
+    );
+    // timestamp isn't digits
+    expect(verifyRetellSignature(body, 'v=abc,d=xxxxxx', SECRET)).toBe(false);
+    // missing the d= part
+    expect(verifyRetellSignature(body, 'v=12345', SECRET)).toBe(false);
+  });
+
+  it('rejects a digest of the wrong byte length without throwing', () => {
+    const body = '{}';
+    const ts = Date.now();
+    // too short
+    const shortSig = `v=${ts},d=Zm9v`;
+    expect(verifyRetellSignature(body, shortSig, SECRET)).toBe(false);
+    // too long
+    const longSig = `v=${ts},d=${'A'.repeat(200)}`;
+    expect(verifyRetellSignature(body, longSig, SECRET)).toBe(false);
   });
 
   it('rejects a signature produced with a different secret', () => {
     const body = '{"event":"call_started","call":{"call_id":"c1"}}';
-    const sig = signBody(body, 'different-secret-value');
+    const sig = signBody(body, Date.now(), 'different-secret-value');
     expect(verifyRetellSignature(body, sig, SECRET)).toBe(false);
+  });
+
+  it('rejects a timestamp older than 5 minutes (replay protection)', () => {
+    const body = '{}';
+    const now = 2_000_000_000_000;
+    const oldTs = now - (5 * 60 * 1000 + 1);
+    const sig = signBody(body, oldTs);
+    expect(verifyRetellSignature(body, sig, SECRET, now)).toBe(false);
+  });
+
+  it('rejects a timestamp more than 5 minutes in the future', () => {
+    const body = '{}';
+    const now = 2_000_000_000_000;
+    const futureTs = now + (5 * 60 * 1000 + 1);
+    const sig = signBody(body, futureTs);
+    expect(verifyRetellSignature(body, sig, SECRET, now)).toBe(false);
+  });
+
+  it('accepts a timestamp at the edge of the skew window', () => {
+    const body = '{}';
+    const now = 2_000_000_000_000;
+    const edgeTs = now - 5 * 60 * 1000;
+    const sig = signBody(body, edgeTs);
+    expect(verifyRetellSignature(body, sig, SECRET, now)).toBe(true);
   });
 });
 
