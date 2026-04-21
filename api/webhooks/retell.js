@@ -10,6 +10,7 @@ import { getDb } from '../../lib/db.js';
 import {
   verifyRetellSignature,
   describeRetellSignature,
+  diagnoseHmacInputs,
   applyWebhookEvent,
 } from '../../lib/retell-webhook.js';
 
@@ -121,6 +122,12 @@ export default async function handler(req, res) {
         rawBodyBytes: Buffer.byteLength(rawBody, 'utf8'),
       }),
     );
+
+    console.log(
+      '[retell-webhook] hmac inputs',
+      JSON.stringify(diagnoseHmacInputs(rawBody, signature, secret)),
+    );
+
     return res.status(401).json({ error: 'Invalid signature' });
   }
 
