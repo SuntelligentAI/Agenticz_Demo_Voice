@@ -4,7 +4,9 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" }
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/history", "destination": "/history.html" },
+    { "source": "/calls/:id", "destination": "/calls.html" }
   ],
   "headers": [
     {

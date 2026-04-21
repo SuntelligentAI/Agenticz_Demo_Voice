@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>Call history — Agenticz Demo Voice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/brand.css" />
+    <style>
+      body {
+        visibility: hidden;
+      }
+      body.ready {
+        visibility: visible;
+      }
+
+      .topbar .right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .user-email {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+      }
+
+      .btn-ghost {
+        background: transparent;
+        color: var(--fg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 8px 14px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: border-color 120ms ease, color 120ms ease;
+      }
+
+      .btn-ghost:hover {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+
+      main {
+        flex: 1;
+        padding: 40px 28px 80px;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 28px;
+      }
+
+      .card-title {
+        margin: 0 0 4px;
+        font-family: "Outfit", sans-serif;
+        font-weight: 500;
+        font-size: 22px;
+      }
+
+      .card-sub {
+        margin: 0 0 20px;
+        color: var(--muted);
+        font-size: 13px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        letter-spacing: 0.04em;
+      }
+
+      table.history {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      table.history th,
+      table.history td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      table.history th {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      table.history tbody tr {
+        cursor: pointer;
+        transition: background 80ms ease;
+      }
+
+      table.history tbody tr:nth-child(even) {
+        background: var(--bg);
+      }
+
+      table.history tbody tr:hover {
+        background: var(--surface-hi);
+      }
+
+      table.history td.cell-duration,
+      table.history td.cell-outcome {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+      }
+
+      .empty-state {
+        padding: 40px 20px;
+        text-align: center;
+        color: var(--muted);
+      }
+
+      .empty-state a {
+        color: var(--gold);
+      }
+
+      .pagination {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 20px;
+        justify-content: flex-end;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .pagination button {
+        background: transparent;
+        border: 1px solid var(--line);
+        color: var(--fg);
+        border-radius: var(--radius);
+        padding: 6px 12px;
+        font-family: inherit;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+
+      .pagination button:hover:not(:disabled) {
+        border-color: var(--gold);
+        color: var(--gold);
+      }
+
+      .pagination button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      footer {
+        padding: 20px;
+        border-top: 1px solid var(--line);
+        text-align: center;
+      }
+
+      footer .status {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px;
+        color: var(--muted);
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 720px) {
+        table.history th.cell-retell,
+        table.history td.cell-retell {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="logo" aria-label="Agenticz">
+        <span class="slashes" aria-hidden="true">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </span>
+        <span class="wordmark">AGENTIC<span class="z">Z</span></span>
+      </div>
+      <div class="right">
+        <a class="btn-ghost" href="/dashboard">New call</a>
+        <span class="user-email" id="user-email"></span>
+        <button type="button" class="btn-ghost" id="logout">Log out</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <h2 class="card-title">Call history</h2>
+        <p class="card-sub">Your past demo calls, most recent first.</p>
+
+        <div id="history-root" aria-live="polite">
+          <div class="empty-state">Loading…</div>
+        </div>
+
+        <div class="pagination" id="pagination" hidden>
+          <span id="pagination-info"></span>
+          <button type="button" id="prev-page">Prev</button>
+          <button type="button" id="next-page">Next</button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="status">Phase 5 · history</div>
+    </footer>
+
+    <script src="/assets/history.js" defer></script>
+  </body>
+</html>

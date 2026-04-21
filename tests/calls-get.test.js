@@ -118,15 +118,93 @@ describe('getCallForUser', () => {
       startedAt: null,
       endedAt: null,
       durationSeconds: null,
+      transcript: null,
+      recordingUrl: null,
+      aiSummary: null,
+      capturedFields: null,
+      notes: null,
     });
     // Private fields are NOT exposed by this endpoint.
     expect(r.data).not.toHaveProperty('userId');
     expect(r.data).not.toHaveProperty('companyDescription');
     expect(r.data).not.toHaveProperty('callPurpose');
-    expect(r.data).not.toHaveProperty('transcript');
-    expect(r.data).not.toHaveProperty('recordingUrl');
-    expect(r.data).not.toHaveProperty('aiSummary');
-    expect(r.data).not.toHaveProperty('notes');
+  });
+
+  it('parses captured_fields JSON and exposes post-call artefacts', async () => {
+    const db = makeFakeDb([
+      {
+        id: 'call-2',
+        user_id: 'user-1',
+        agent_name: 'Sarah',
+        company_name: 'Acme',
+        company_description: 'x'.repeat(20),
+        call_purpose: 'y'.repeat(20),
+        prospect_name: 'John',
+        prospect_phone: '+447700900000',
+        retell_call_id: 'retell-2',
+        status: 'ended',
+        outcome: 'completed',
+        transcript: 'Agent: Hi\nUser: Hello',
+        recording_url: 'https://retellai.com/rec/abc.wav',
+        ai_summary: 'Productive call. Booked a follow-up.',
+        captured_fields:
+          '{"interestedInFollowUp":true,"proposedSlot":"Thu 2pm","qualifyingNotes":null}',
+        notes: 'My operator notes here.',
+        created_at: 1_700_000_000_000,
+        started_at: 1_700_000_001_000,
+        ended_at: 1_700_000_061_000,
+        duration_seconds: 60,
+      },
+    ]);
+    const r = await calls.getCallForUser({
+      callId: 'call-2',
+      userId: 'user-1',
+      db,
+    });
+    expect(r.ok).toBe(true);
+    expect(r.data.transcript).toContain('Agent:');
+    expect(r.data.recordingUrl).toMatch(/retellai\.com/);
+    expect(r.data.aiSummary).toMatch(/follow-up/);
+    expect(r.data.capturedFields).toEqual({
+      interestedInFollowUp: true,
+      proposedSlot: 'Thu 2pm',
+      qualifyingNotes: null,
+    });
+    expect(r.data.notes).toBe('My operator notes here.');
+  });
+
+  it('returns capturedFields=null when the JSON is malformed', async () => {
+    const db = makeFakeDb([
+      {
+        id: 'call-3',
+        user_id: 'user-1',
+        agent_name: 'Sarah',
+        company_name: 'Acme',
+        company_description: 'x'.repeat(20),
+        call_purpose: 'y'.repeat(20),
+        prospect_name: 'John',
+        prospect_phone: '+447700900000',
+        retell_call_id: 'retell-3',
+        status: 'ended',
+        outcome: 'completed',
+        transcript: null,
+        recording_url: null,
+        ai_summary: null,
+        captured_fields: '{not valid json',
+        notes: null,
+        created_at: 1_700_000_000_000,
+        started_at: null,
+        ended_at: null,
+        duration_seconds: null,
+      },
+    ]);
+    const r = await calls.getCallForUser({
+      callId: 'call-3',
+      userId: 'user-1',
+      db,
+    });
+    expect(r.ok).toBe(true);
+    expect(r.data.capturedFields).toBeNull();
   });
 
   it('returns 404 when callId is missing', async () => {

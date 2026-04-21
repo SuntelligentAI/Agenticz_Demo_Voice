@@ -14,7 +14,11 @@ const FIELD_KEYS = Object.keys(RULES);
 const POLL_INTERVAL_MS = 3000;
 const POLL_FIRST_MS = 500;
 const POLL_MAX_MS = 15 * 60 * 1000;
-const POLL_TERMINAL_TAIL_MS = 10_000;
+// After the call reaches a terminal state, keep polling long enough to catch
+// Retell's call_analyzed event (transcript / recording / summary), which
+// typically arrives 20–40 s after call_ended. We stop early if the analyzed
+// artefacts are already present.
+const POLL_TERMINAL_TAIL_MS = 60_000;
 const TERMINAL_STATUSES = new Set(['ended', 'failed']);
 
 function clean(value) {
@@ -149,6 +153,65 @@ function hideStatusCard() {
   document.getElementById('status-card').classList.remove('visible');
 }
 
+function hasPostCallData(row) {
+  return Boolean(
+    row &&
+      (row.transcript ||
+        row.recordingUrl ||
+        row.aiSummary ||
+        (row.capturedFields && typeof row.capturedFields === 'object') ||
+        row.notes),
+  );
+}
+
+function showPostCallPanel() {
+  const panel = document.getElementById('post-call-panel');
+  if (panel) panel.hidden = false;
+}
+
+function hidePostCallPanel() {
+  const panel = document.getElementById('post-call-panel');
+  if (panel) panel.hidden = true;
+  const content = document.getElementById('post-call-content');
+  if (content) {
+    content.innerHTML = '';
+    content.dataset.pcWired = '';
+  }
+}
+
+async function saveCallNotes(callId, notes) {
+  const res = await fetch(
+    `/api/calls/${encodeURIComponent(callId)}/notes`,
+    {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes }),
+    },
+  );
+  if (res.status === 401) {
+    location.replace('/login');
+    throw new Error('Session expired');
+  }
+  if (!res.ok) {
+    let body = {};
+    try { body = await res.json(); } catch {}
+    throw new Error(body?.error || `Save failed (${res.status})`);
+  }
+  const body = await res.json();
+  return body.notes || '';
+}
+
+function renderPostCallIfReady(row) {
+  if (!row || !hasPostCallData(row)) return;
+  const container = document.getElementById('post-call-content');
+  if (!container || !window.AgenticzPostCall) return;
+  window.AgenticzPostCall.render(row, container, {
+    onSave: (text) => saveCallNotes(row.id, text),
+  });
+  showPostCallPanel();
+}
+
 let pollTimer = null;
 let pollDeadline = 0;
 let terminalAt = 0;
@@ -232,8 +295,15 @@ async function pollCall(id) {
   }
 
   setStatus(row);
+  renderPostCallIfReady(row);
 
   if (TERMINAL_STATUSES.has(row.status)) {
+    // If call_analyzed has already landed, we have all we need — stop now.
+    if (hasPostCallData(row)) {
+      stopPolling();
+      onPollingStopped('terminal');
+      return;
+    }
     if (!terminalAt) terminalAt = Date.now();
     if (Date.now() - terminalAt >= POLL_TERMINAL_TAIL_MS) {
       stopPolling();
@@ -309,6 +379,7 @@ function wireNewCall() {
   document.getElementById('new-call').addEventListener('click', () => {
     stopPolling();
     hideStatusCard();
+    hidePostCallPanel();
     hideNewCallButton();
     setFormError('');
     clearAllFieldErrors();

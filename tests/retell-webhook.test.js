@@ -340,7 +340,7 @@ describe('applyWebhookEvent', () => {
     expect(db.state.updates).toHaveLength(1);
   });
 
-  it('call_analyzed: no status update in Phase 4 (but event is still logged)', async () => {
+  it('call_analyzed: writes post-call artefacts and never touches status', async () => {
     db._seedDemoCall({ id: 'demo-1', retellCallId: 'call_abc' });
     const info = vi.spyOn(console, 'info').mockImplementation(() => {});
 
@@ -355,8 +355,12 @@ describe('applyWebhookEvent', () => {
     });
     info.mockRestore();
 
+    // Event is logged.
     expect(db.state.events).toHaveLength(1);
-    expect(db.state.updates).toHaveLength(0);
+    // Exactly one UPDATE — for the analyzed fields, never for status.
+    expect(db.state.updates).toHaveLength(1);
+    expect(db.state.updates[0].sql).not.toMatch(/status\s*=/);
+    expect(db.state.updates[0].sql).toMatch(/transcript = \?/);
   });
 
   it('returns ignored on bad shape without crashing', async () => {

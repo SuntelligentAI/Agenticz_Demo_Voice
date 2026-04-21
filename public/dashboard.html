@@ -301,6 +301,7 @@
         <span class="wordmark">AGENTIC<span class="z">Z</span></span>
       </div>
       <div class="right">
+        <a class="btn-ghost" href="/history">History</a>
         <span class="user-email" id="user-email"></span>
         <button type="button" class="btn-ghost" id="logout">Log out</button>
       </div>
@@ -333,6 +334,14 @@
             New call
           </button>
         </div>
+      </section>
+
+      <section class="card" id="post-call-panel" hidden>
+        <h2 class="card-title">Post-call review</h2>
+        <p class="card-sub">
+          AI summary, recording, transcript, captured fields, and operator notes.
+        </p>
+        <div id="post-call-content"></div>
       </section>
 
       <section class="card">
@@ -434,6 +443,7 @@
       <div class="status">Phase 3 · live demo trigger</div>
     </footer>
 
+    <script src="/assets/call-view.js" defer></script>
     <script src="/assets/dashboard.js" defer></script>
   </body>
 </html>
