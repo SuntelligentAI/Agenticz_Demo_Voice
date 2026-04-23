@@ -125,7 +125,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.retellai.com wss://*.retellai.com https://*.livekit.cloud wss://*.livekit.cloud https://*.amazonaws.com https://esm.sh https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; media-src 'self' blob: mediastream: https://*.retellai.com https://*.amazonaws.com; frame-src https://cal.com https://app.cal.com"
+          "value": "default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.retellai.com wss://*.retellai.com https://*.livekit.cloud wss://*.livekit.cloud https://*.amazonaws.com https://esm.sh https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; media-src 'self' blob: mediastream: https://*.retellai.com https://*.livekit.cloud wss://*.retellai.com wss://*.livekit.cloud https://*.amazonaws.com; frame-src https://cal.com https://app.cal.com"
         }
       ]
     }
