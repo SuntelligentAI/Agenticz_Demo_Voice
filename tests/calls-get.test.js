@@ -107,6 +107,7 @@ describe('getCallForUser', () => {
     expect(r.ok).toBe(true);
     expect(r.data).toEqual({
       id: 'call-1',
+      product: 'speed_to_lead',
       status: 'dialing',
       outcome: null,
       agentName: 'Sarah',

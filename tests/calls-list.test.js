@@ -15,16 +15,27 @@ beforeAll(async () => {
 function makeFakeDb(rows) {
   return {
     execute: vi.fn(async ({ sql, args }) => {
+      const hasProductFilter = /AND product = \?/i.test(sql);
       if (/^\s*SELECT COUNT\(\*\)/i.test(sql)) {
-        const [userId] = args;
-        return {
-          rows: [{ count: rows.filter((r) => r.user_id === userId).length }],
-        };
+        const [userId, product] = hasProductFilter ? args : [args[0]];
+        const filtered = rows.filter(
+          (r) => r.user_id === userId && (!hasProductFilter || r.product === product),
+        );
+        return { rows: [{ count: filtered.length }] };
       }
-      if (/^\s*SELECT id, status, outcome/i.test(sql)) {
-        const [userId, limit, offset] = args;
+      if (/^\s*SELECT id, product, status, outcome/i.test(sql)) {
+        let userId, product, limit, offset;
+        if (hasProductFilter) {
+          [userId, product, limit, offset] = args;
+        } else {
+          [userId, limit, offset] = args;
+        }
         const sorted = rows
-          .filter((r) => r.user_id === userId)
+          .filter(
+            (r) =>
+              r.user_id === userId &&
+              (!hasProductFilter || r.product === product),
+          )
           .slice()
           .sort((a, b) => b.created_at - a.created_at);
         return { rows: sorted.slice(offset, offset + limit) };
@@ -34,10 +45,11 @@ function makeFakeDb(rows) {
   };
 }
 
-function makeRow(i, userId = 'user-1') {
+function makeRow(i, userId = 'user-1', product = 'speed_to_lead') {
   return {
     id: `call-${i}`,
     user_id: userId,
+    product,
     status: 'ended',
     outcome: 'completed',
     agent_name: 'Sarah',
@@ -131,6 +143,65 @@ describe('listCallsForUser', () => {
     expect(r.data.items).toEqual([]);
     expect(r.data.total).toBe(0);
     expect(r.data.totalPages).toBe(1);
+  });
+
+  it('filters by product when supplied', async () => {
+    const rows = [
+      makeRow(1, 'user-1', 'speed_to_lead'),
+      makeRow(2, 'user-1', 'receptionist'),
+      makeRow(3, 'user-1', 'receptionist'),
+      makeRow(4, 'user-1', 'speed_to_lead'),
+    ];
+    const db = makeFakeDb(rows);
+
+    const stl = await calls.listCallsForUser({
+      userId: 'user-1',
+      page: 1,
+      limit: 20,
+      product: 'speed_to_lead',
+      db,
+    });
+    expect(stl.data.items.map((i) => i.id).sort()).toEqual(['call-1', 'call-4']);
+    expect(stl.data.product).toBe('speed_to_lead');
+
+    const rcp = await calls.listCallsForUser({
+      userId: 'user-1',
+      page: 1,
+      limit: 20,
+      product: 'receptionist',
+      db,
+    });
+    expect(rcp.data.items.map((i) => i.id).sort()).toEqual(['call-2', 'call-3']);
+    expect(rcp.data.product).toBe('receptionist');
+  });
+
+  it('ignores an unknown product filter and returns all rows for the user', async () => {
+    const rows = [
+      makeRow(1, 'user-1', 'speed_to_lead'),
+      makeRow(2, 'user-1', 'receptionist'),
+    ];
+    const db = makeFakeDb(rows);
+    const r = await calls.listCallsForUser({
+      userId: 'user-1',
+      page: 1,
+      limit: 20,
+      product: 'not-a-product',
+      db,
+    });
+    expect(r.data.items).toHaveLength(2);
+    expect(r.data.product).toBeNull();
+  });
+
+  it('exposes `product` on every list row', async () => {
+    const rows = [makeRow(1, 'user-1', 'receptionist')];
+    const db = makeFakeDb(rows);
+    const r = await calls.listCallsForUser({
+      userId: 'user-1',
+      page: 1,
+      limit: 20,
+      db,
+    });
+    expect(r.data.items[0].product).toBe('receptionist');
   });
 
   it('list shape omits private and post-call artefact fields', async () => {

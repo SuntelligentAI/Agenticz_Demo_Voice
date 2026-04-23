@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { getDb } from '../lib/db.js';
 
 const statements = [
@@ -46,12 +47,71 @@ const statements = [
     received_at INTEGER NOT NULL
   )`,
   `CREATE INDEX IF NOT EXISTS idx_call_events_call ON call_events(demo_call_id, received_at)`,
+
+  // Phase 7 — receptionist staged context
+  `CREATE TABLE IF NOT EXISTS receptionist_stages (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    agent_name TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    company_description TEXT NOT NULL,
+    call_purpose TEXT NOT NULL,
+    staged_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    cleared_at INTEGER
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_receptionist_stages_user_active
+     ON receptionist_stages(user_id, cleared_at, expires_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_receptionist_stages_active
+     ON receptionist_stages(cleared_at, expires_at, staged_at DESC)`,
+
+  // Phase 7 — simple key/value system settings (kill switch lives here)
+  `CREATE TABLE IF NOT EXISTS system_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    updated_by TEXT
+  )`,
 ];
 
 const db = getDb();
 for (const sql of statements) {
   await db.execute(sql);
 }
+
+// Phase 7 — add `product` column to demo_calls (idempotent: check first).
+const cols = await db.execute({ sql: 'PRAGMA table_info(demo_calls)' });
+const hasProduct = cols.rows.some((r) => r.name === 'product');
+if (!hasProduct) {
+  await db.execute(
+    `ALTER TABLE demo_calls ADD COLUMN product TEXT NOT NULL DEFAULT 'speed_to_lead'`,
+  );
+  console.log("Added `product` column to demo_calls (default 'speed_to_lead').");
+}
+
+// Phase 7 — seed the kill-switch default (line starts OFF).
+const now = Date.now();
+await db.execute({
+  sql: `INSERT OR IGNORE INTO system_settings (key, value, updated_at, updated_by)
+        VALUES (?, ?, ?, ?)`,
+  args: ['receptionist_line_enabled', 'false', now, 'migration'],
+});
+
+// Phase 7 — seed a sentinel "anonymous" user for inbound calls that arrive
+// when no demo is staged (so demo_calls.user_id NOT NULL can be satisfied).
+// This user cannot log in (password_hash is a placeholder that no bcrypt
+// verify will match).
+await db.execute({
+  sql: `INSERT OR IGNORE INTO users (id, email, password_hash, created_at)
+        VALUES (?, ?, ?, ?)`,
+  args: [
+    'system-anonymous',
+    'anonymous@demo.local',
+    '(disabled-login)',
+    now,
+  ],
+});
+
 console.log(
-  'Migration complete: users, demo_calls, call_events tables + indexes ready.',
+  'Migration complete: users, demo_calls(+product), call_events, receptionist_stages, system_settings ready.',
 );

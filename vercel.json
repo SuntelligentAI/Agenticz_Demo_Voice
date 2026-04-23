@@ -28,6 +28,18 @@
       "permanent": false
     },
     {
+      "source": "/voice/receptionist/live/history",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/voice/receptionist/live/history",
+      "permanent": false
+    },
+    {
+      "source": "/voice/receptionist/live/calls/:id",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/voice/receptionist/live/calls/:id",
+      "permanent": false
+    },
+    {
       "source": "/voice/website-voice-bot/live",
       "missing": [{ "type": "cookie", "key": "agenticz_session" }],
       "destination": "/login?next=/voice/website-voice-bot/live",
@@ -65,7 +77,7 @@
     { "source": "/talentsift", "destination": "/talentsift.html" },
     { "source": "/dashboard-demo", "destination": "/dashboard-demo.html" },
     { "source": "/voice/speed-to-lead/live/calls/:id", "destination": "/voice/speed-to-lead/live/calls.html" },
-    { "source": "/voice/receptionist/live", "destination": "/coming-soon.html?product=receptionist" },
+    { "source": "/voice/receptionist/live/calls/:id", "destination": "/voice/receptionist/live/calls.html" },
     { "source": "/voice/website-voice-bot/live", "destination": "/coming-soon.html?product=website-voice-bot" },
     { "source": "/web-bot/live", "destination": "/coming-soon.html?product=web-bot" },
     { "source": "/talentsift/live", "destination": "/coming-soon.html?product=talentsift" },

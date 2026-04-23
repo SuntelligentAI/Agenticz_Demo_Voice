@@ -47,16 +47,34 @@ async function loadMe() {
   }
 }
 
+function productFilter() {
+  const root = document.getElementById('history-root');
+  const v = root?.dataset?.product;
+  return typeof v === 'string' && v ? v : null;
+}
+
+function newCallHref() {
+  const root = document.getElementById('history-root');
+  return root?.dataset?.newCallHref || '/voice/speed-to-lead/live';
+}
+
 async function loadPage(page) {
   const root = document.getElementById('history-root');
   root.innerHTML = '<div class="empty-state">Loading…</div>';
 
+  const qs = new URLSearchParams({
+    page: String(page),
+    limit: String(PAGE_LIMIT),
+  });
+  const product = productFilter();
+  if (product) qs.set('product', product);
+
   let res;
   try {
-    res = await fetch(
-      `/api/calls?page=${encodeURIComponent(page)}&limit=${PAGE_LIMIT}`,
-      { credentials: 'same-origin', cache: 'no-store' },
-    );
+    res = await fetch(`/api/calls?${qs.toString()}`, {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
   } catch {
     root.innerHTML = '<div class="empty-state">Network error. Try again.</div>';
     return;
@@ -75,9 +93,10 @@ async function loadPage(page) {
   currentTotalPages = data.totalPages || 1;
 
   if (!data.items || data.items.length === 0) {
+    const href = newCallHref();
     root.innerHTML = `
       <div class="empty-state">
-        No calls yet. <a href="/voice/speed-to-lead/live">Start your first demo call</a>.
+        No calls yet. <a href="${href}">Start your first demo call</a>.
       </div>
     `;
     document.getElementById('pagination').hidden = true;

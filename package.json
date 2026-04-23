@@ -10,7 +10,8 @@
     "test:watch": "vitest",
     "db:migrate": "node --env-file=.env scripts/migrate.js",
     "db:seed": "node --env-file=.env scripts/seed-user.js",
-    "retell:setup": "node --env-file=.env scripts/setup-retell-agent.js"
+    "retell:setup": "node --env-file=.env scripts/setup-retell-agent.js",
+    "retell:setup-receptionist": "node --env-file=.env scripts/setup-retell-receptionist.js"
   },
   "devDependencies": {
     "vercel": "^39.0.0",

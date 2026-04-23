@@ -14,13 +14,16 @@ export default async function handler(req, res) {
 
   const pageRaw = req.query?.page;
   const limitRaw = req.query?.limit;
+  const productRaw = req.query?.product;
   const page = Number(Array.isArray(pageRaw) ? pageRaw[0] : pageRaw) || 1;
   const limit = Number(Array.isArray(limitRaw) ? limitRaw[0] : limitRaw) || 20;
+  const product = Array.isArray(productRaw) ? productRaw[0] : productRaw;
 
   const result = await listCallsForUser({
     userId: user.id,
     page,
     limit,
+    product: typeof product === 'string' ? product : null,
     db,
   });
 

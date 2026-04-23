@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
-    <title>Call history — Agenticz Demo Voice</title>
+    <title>Call detail — Agenticz Demo Voice</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -59,7 +59,7 @@
       main {
         flex: 1;
         padding: 40px 28px 80px;
-        max-width: 1100px;
+        max-width: 960px;
         margin: 0 auto;
         width: 100%;
         display: flex;
@@ -82,96 +82,65 @@
       }
 
       .card-sub {
-        margin: 0 0 20px;
+        margin: 0 0 24px;
         color: var(--muted);
         font-size: 13px;
         font-family: "JetBrains Mono", ui-monospace, monospace;
         letter-spacing: 0.04em;
       }
 
-      table.history {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-
-      table.history th,
-      table.history td {
-        text-align: left;
-        padding: 12px 14px;
-        border-bottom: 1px solid var(--line);
-      }
-
-      table.history th {
-        font-family: "JetBrains Mono", ui-monospace, monospace;
-        font-size: 11px;
-        letter-spacing: 0.2em;
-        text-transform: uppercase;
-        color: var(--muted);
-        font-weight: 500;
-      }
-
-      table.history tbody tr {
-        cursor: pointer;
-        transition: background 80ms ease;
-      }
-
-      table.history tbody tr:nth-child(even) {
-        background: var(--bg);
-      }
-
-      table.history tbody tr:hover {
-        background: var(--surface-hi);
-      }
-
-      table.history td.cell-duration,
-      table.history td.cell-outcome {
+      .meta-grid {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 8px 20px;
         font-family: "JetBrains Mono", ui-monospace, monospace;
         font-size: 13px;
       }
 
-      .empty-state {
-        padding: 40px 20px;
-        text-align: center;
+      .meta-grid dt {
         color: var(--muted);
-      }
-
-      .empty-state a {
-        color: var(--gold);
-      }
-
-      .pagination {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-top: 20px;
-        justify-content: flex-end;
-        font-family: "JetBrains Mono", ui-monospace, monospace;
-        font-size: 12px;
-        color: var(--muted);
-      }
-
-      .pagination button {
-        background: transparent;
-        border: 1px solid var(--line);
-        color: var(--fg);
-        border-radius: var(--radius);
-        padding: 6px 12px;
-        font-family: inherit;
-        font-size: 11px;
-        letter-spacing: 0.2em;
         text-transform: uppercase;
-        cursor: pointer;
+        letter-spacing: 0.16em;
+        font-size: 11px;
+        align-self: center;
       }
 
-      .pagination button:hover:not(:disabled) {
+      .meta-grid dd {
+        margin: 0;
+        color: var(--fg);
+        word-break: break-word;
+      }
+
+      .status-pill {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        border: 1px solid var(--line);
+        background: var(--bg);
+        color: var(--muted);
+      }
+
+      .status-pill.in_progress,
+      .status-pill.dialing {
         border-color: var(--gold);
         color: var(--gold);
       }
+      .status-pill.ended {
+        border-color: var(--line);
+        color: var(--fg);
+      }
+      .status-pill.failed {
+        border-color: var(--danger);
+        color: var(--danger);
+      }
 
-      .pagination button:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
+      .empty-state {
+        padding: 30px;
+        text-align: center;
+        color: var(--muted);
       }
 
       footer {
@@ -188,10 +157,13 @@
         text-transform: uppercase;
       }
 
-      @media (max-width: 720px) {
-        table.history th.cell-retell,
-        table.history td.cell-retell {
-          display: none;
+      @media (max-width: 640px) {
+        .meta-grid {
+          grid-template-columns: 1fr;
+          gap: 2px;
+        }
+        .meta-grid dt {
+          margin-top: 8px;
         }
       }
     </style>
@@ -208,39 +180,54 @@
       </div>
       <div class="right">
         <a class="btn-ghost" href="/">Demos</a>
-        <a class="btn-ghost" href="/voice/speed-to-lead/live">New call</a>
+        <a class="btn-ghost" href="/voice/receptionist/live/history">History</a>
+        <a class="btn-ghost" href="/voice/receptionist/live">Dashboard</a>
         <span class="user-email" id="user-email"></span>
         <button type="button" class="btn-ghost" id="logout">Log out</button>
       </div>
     </header>
 
     <main>
-      <section class="card">
-        <h2 class="card-title">Call history</h2>
-        <p class="card-sub">Your past demo calls, most recent first.</p>
+      <section class="card" id="meta-card" hidden>
+        <h2 class="card-title" id="meta-title">Call</h2>
+        <p class="card-sub" id="meta-sub">—</p>
+        <dl class="meta-grid">
+          <dt>Status</dt>
+          <dd><span class="status-pill" id="meta-status">—</span></dd>
+          <dt>Outcome</dt>
+          <dd id="meta-outcome">—</dd>
+          <dt>Duration</dt>
+          <dd id="meta-duration">—</dd>
+          <dt>Prospect</dt>
+          <dd id="meta-prospect">—</dd>
+          <dt>Started</dt>
+          <dd id="meta-started">—</dd>
+          <dt>Ended</dt>
+          <dd id="meta-ended">—</dd>
+          <dt>Retell call ID</dt>
+          <dd id="meta-retell-id">—</dd>
+        </dl>
+      </section>
 
-        <div
-          id="history-root"
-          aria-live="polite"
-          data-detail-base="/voice/speed-to-lead/live/calls"
-          data-product="speed_to_lead"
-          data-new-call-href="/voice/speed-to-lead/live"
-        >
-          <div class="empty-state">Loading…</div>
-        </div>
+      <section class="card" id="post-call-panel" hidden>
+        <h2 class="card-title">Post-call review</h2>
+        <p class="card-sub">
+          AI summary, recording, transcript, captured fields, and operator
+          notes.
+        </p>
+        <div id="post-call-content"></div>
+      </section>
 
-        <div class="pagination" id="pagination" hidden>
-          <span id="pagination-info"></span>
-          <button type="button" id="prev-page">Prev</button>
-          <button type="button" id="next-page">Next</button>
-        </div>
+      <section class="card" id="empty-card">
+        <div class="empty-state" id="empty-message">Loading…</div>
       </section>
     </main>
 
     <footer>
-      <div class="status">Phase 5 · history</div>
+      <div class="status">Phase 5 · call detail</div>
     </footer>
 
-    <script src="/assets/history.js" defer></script>
+    <script src="/assets/call-view.js" defer></script>
+    <script src="/assets/call-detail.js" defer></script>
   </body>
 </html>

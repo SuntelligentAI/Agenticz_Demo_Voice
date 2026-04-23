@@ -148,8 +148,10 @@ describe('gated live routes (vercel.json)', () => {
 });
 
 describe('coming-soon shared page', () => {
+  // /voice/receptionist/live is NO LONGER a coming-soon page in Phase 7 —
+  // it's a real live dashboard. The 4 remaining coming-soon products still
+  // share coming-soon.html.
   const COMING_SOON_LIVE_PATHS = [
-    { path: '/voice/receptionist/live', product: 'receptionist' },
     {
       path: '/voice/website-voice-bot/live',
       product: 'website-voice-bot',
@@ -180,14 +182,12 @@ describe('coming-soon shared page', () => {
     },
   );
 
-  it('coming-soon.js knows about all 5 products as config keys', () => {
+  it('coming-soon.js knows about every coming-soon product rewrite', () => {
     const js = readFileSync(
       join(PUBLIC_DIR, 'assets/coming-soon.js'),
       'utf8',
     );
     for (const { product } of COMING_SOON_LIVE_PATHS) {
-      // Match either quoted keys ('website-voice-bot':) or bare keys
-      // (receptionist:) in the PRODUCTS object literal.
       const re = new RegExp(
         `(?:['"])?${product.replace(/-/g, '\\-')}(?:['"])?\\s*:`,
       );
