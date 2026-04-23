@@ -82,6 +82,23 @@ const statements = [
   `CREATE INDEX IF NOT EXISTS idx_website_voice_stages_active
      ON website_voice_stages(cleared_at, expires_at, staged_at DESC)`,
 
+  // Phase 9 — web bot (text chat) staged context
+  `CREATE TABLE IF NOT EXISTS web_chat_stages (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    agent_name TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    company_description TEXT NOT NULL,
+    call_purpose TEXT NOT NULL,
+    staged_at INTEGER NOT NULL,
+    expires_at INTEGER NOT NULL,
+    cleared_at INTEGER
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_web_chat_stages_user_active
+     ON web_chat_stages(user_id, cleared_at, expires_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_web_chat_stages_active
+     ON web_chat_stages(cleared_at, expires_at, staged_at DESC)`,
+
   // Phase 7 — simple key/value system settings (kill switch lives here)
   `CREATE TABLE IF NOT EXISTS system_settings (
     key TEXT PRIMARY KEY,
@@ -132,6 +149,13 @@ await db.execute({
   sql: `INSERT OR IGNORE INTO system_settings (key, value, updated_at, updated_by)
         VALUES (?, ?, ?, ?)`,
   args: ['website_voice_enabled', 'false', now, 'migration'],
+});
+
+// Phase 9 — seed the web bot (text chat) kill-switch default (starts OFF).
+await db.execute({
+  sql: `INSERT OR IGNORE INTO system_settings (key, value, updated_at, updated_by)
+        VALUES (?, ?, ?, ?)`,
+  args: ['web_chat_enabled', 'false', now, 'migration'],
 });
 
 // Phase 7 — seed a sentinel "anonymous" user for inbound calls that arrive

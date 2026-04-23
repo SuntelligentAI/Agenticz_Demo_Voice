@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>Web Bot — Live demo — Agenticz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/assets/brand.css" />
+    <style>
+      body { visibility: hidden; }
+      body.ready { visibility: visible; }
+
+      .topbar .right { display: flex; align-items: center; gap: 16px; }
+      .user-email {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px; color: var(--muted); letter-spacing: 0.05em;
+      }
+      .btn-ghost {
+        background: transparent; color: var(--fg);
+        border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 8px 14px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+        cursor: pointer; text-decoration: none;
+        display: inline-flex; align-items: center;
+        transition: border-color 120ms ease, color 120ms ease;
+      }
+      .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+      main {
+        flex: 1;
+        padding: 32px 28px 80px;
+        max-width: 980px;
+        margin: 0 auto;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 24px 28px;
+      }
+      .card-title {
+        margin: 0 0 4px;
+        font-family: "Outfit", sans-serif;
+        font-weight: 500;
+        font-size: 22px;
+      }
+      .card-sub {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 13px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        letter-spacing: 0.04em;
+      }
+
+      .line-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; }
+      .line-state { display: flex; align-items: center; gap: 14px; }
+      .line-pill {
+        display: inline-flex; align-items: center; gap: 10px;
+        padding: 6px 14px; border-radius: 999px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+        border: 1px solid var(--line); background: var(--bg);
+      }
+      .line-pill .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--danger); }
+      .line-pill.on { border-color: var(--gold); color: var(--gold); }
+      .line-pill.on .dot { background: var(--gold); }
+      .line-pill.off { color: var(--danger); }
+      .line-help { color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .line-toggle {
+        min-height: 40px; padding: 0 18px;
+        background: var(--gold); color: #050505;
+        border: none; border-radius: var(--radius);
+        font-family: "Outfit", sans-serif; font-weight: 600;
+        font-size: 13px; letter-spacing: 0.08em; cursor: pointer;
+        transition: background 120ms ease;
+      }
+      .line-toggle.off { background: transparent; border: 1px solid var(--line); color: var(--fg); }
+      .line-toggle:hover:not(:disabled) { background: var(--gold-hi); }
+      .line-toggle.off:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); background: transparent; }
+
+      .auto-off-banner {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--gold);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        color: var(--fg);
+      }
+      .auto-off-banner .hint { color: var(--muted); margin-left: 6px; }
+
+      .stage-field {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 8px 20px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px;
+        margin-bottom: 14px;
+      }
+      .stage-field dt { color: var(--muted); text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; }
+      .stage-field dd { margin: 0; color: var(--fg); word-break: break-word; }
+      .stage-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+      .stage-countdown {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 13px; color: var(--muted); letter-spacing: 0.06em;
+      }
+      form.stage-form { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .field { display: flex; flex-direction: column; gap: 6px; }
+      .field.full { grid-column: 1 / -1; }
+      label {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+      }
+      input[type="text"], textarea {
+        background: var(--bg); border: 1px solid var(--line); color: var(--fg);
+        padding: 12px 14px; min-height: 44px; border-radius: var(--radius);
+        font: inherit; font-size: 15px;
+        transition: border-color 120ms ease, background 120ms ease;
+        resize: vertical;
+      }
+      textarea { min-height: 86px; line-height: 1.5; }
+      input:focus, textarea:focus { outline: none; border-color: var(--gold); background: var(--surface-hi); }
+      .field-error { min-height: 16px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px; color: var(--danger); }
+      .field.has-error input, .field.has-error textarea { border-color: var(--danger); }
+      .form-actions { grid-column: 1 / -1; display: flex; align-items: center; gap: 14px; }
+      button.btn-primary {
+        min-height: 44px; padding: 0 22px;
+        background: var(--gold); color: #050505;
+        border: none; border-radius: var(--radius);
+        font-family: "Outfit", sans-serif; font-weight: 600;
+        font-size: 14px; letter-spacing: 0.08em; cursor: pointer;
+        transition: background 120ms ease, transform 120ms ease;
+      }
+      button.btn-primary:hover:not(:disabled) { background: var(--gold-hi); }
+      button.btn-primary:active:not(:disabled) { transform: translateY(1px); }
+      button.btn-primary:disabled { opacity: 0.7; cursor: progress; }
+      .form-error { min-height: 16px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; color: var(--danger); }
+
+      /* Chat widget hero area */
+      .chat-hero { padding: 36px 20px; text-align: center; }
+      .chat-hero .help {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px; color: var(--muted); letter-spacing: 0.22em;
+        text-transform: uppercase; margin-bottom: 18px;
+      }
+      .chat-hero .hint {
+        margin-top: 18px; color: var(--muted); font-size: 14px; line-height: 1.55;
+      }
+      .chat-mount { display: none; }
+      .chat-mount.visible { display: block; }
+      .chat-blocked {
+        color: var(--muted);
+        padding: 24px;
+        border: 1px dashed var(--line);
+        border-radius: var(--radius);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      /* Cal.com booking */
+      .booking-card { display: none; }
+      .booking-card.visible {
+        display: block;
+        animation: fade-in 420ms ease forwards;
+      }
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .booking-frame-wrap {
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--bg);
+      }
+      .booking-frame-wrap iframe {
+        display: block; width: 100%; min-height: 620px;
+        border: 0; background: #050505;
+      }
+
+      .feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+      .feed-item {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        display: flex; gap: 14px; align-items: center; justify-content: space-between;
+        text-decoration: none; color: var(--fg);
+        transition: border-color 120ms ease;
+      }
+      .feed-item:hover { border-color: var(--gold); }
+      .feed-item .pill {
+        display: inline-flex; padding: 2px 8px; border-radius: 999px;
+        border: 1px solid var(--line); color: var(--muted);
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+      }
+      .feed-item .pill.in_progress { border-color: var(--gold); color: var(--gold); }
+      .feed-item .pill.failed { border-color: var(--danger); color: var(--danger); }
+      .feed-meta {
+        display: flex; flex-direction: column; gap: 2px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px; color: var(--muted);
+      }
+      .feed-meta .top { color: var(--fg); font-size: 14px; }
+
+      .post-call-card { display: none; }
+      .post-call-card.visible { display: block; }
+
+      footer {
+        padding: 20px;
+        border-top: 1px solid var(--line);
+        text-align: center;
+      }
+      footer .status {
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 11px; color: var(--muted);
+        letter-spacing: 0.2em; text-transform: uppercase;
+      }
+
+      @media (max-width: 640px) {
+        form.stage-form { grid-template-columns: 1fr; }
+        .stage-field { grid-template-columns: 1fr; gap: 2px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="logo" href="/" aria-label="Agenticz — home">
+        <span class="slashes" aria-hidden="true">
+          <span class="s1"></span>
+          <span class="s2"></span>
+          <span class="s3"></span>
+        </span>
+        <span class="wordmark">AGENTIC<span class="z">Z</span></span>
+      </a>
+      <div class="right">
+        <a class="btn-ghost" href="/">Demos</a>
+        <a class="btn-ghost" href="/web-bot/live/history">History</a>
+        <span class="user-email" id="user-email"></span>
+        <button type="button" class="btn-ghost" id="logout">Log out</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card line-card">
+        <div class="line-state">
+          <span class="line-pill off" id="line-pill">
+            <span class="dot"></span><span id="line-pill-text">Line: OFF</span>
+          </span>
+          <span class="line-help">
+            Master toggle for the chat widget. When OFF, the widget is not
+            mounted on the page.
+          </span>
+        </div>
+        <button type="button" class="line-toggle off" id="line-toggle">Turn line on</button>
+      </section>
+
+      <div id="auto-off-banner" class="auto-off-banner" role="status" aria-live="polite" hidden></div>
+
+      <section class="card" id="staged-card" hidden>
+        <h2 class="card-title">Staged demo</h2>
+        <p class="card-sub">The chat widget uses this context for the next visitor session.</p>
+        <dl class="stage-field">
+          <dt>Agent</dt><dd id="staged-agent">—</dd>
+          <dt>Company</dt><dd id="staged-company">—</dd>
+          <dt>Description</dt><dd id="staged-desc">—</dd>
+          <dt>Call purpose</dt><dd id="staged-purpose">—</dd>
+        </dl>
+        <div class="stage-actions">
+          <span class="stage-countdown" id="staged-countdown">Expires in —</span>
+          <button type="button" class="btn-ghost" id="clear-stage">Clear stage</button>
+        </div>
+      </section>
+
+      <section class="card" id="form-card">
+        <h2 class="card-title">Stage new demo</h2>
+        <p class="card-sub">
+          Set the agent name + business context the chat bot should use.
+          Stages expire after 15 minutes.
+        </p>
+        <form class="stage-form" id="stage-form" novalidate>
+          <div class="field">
+            <label for="agentName">Agent name</label>
+            <input id="agentName" name="agentName" type="text" maxlength="40" autocomplete="off" required />
+            <div class="field-error" data-error-for="agentName"></div>
+          </div>
+          <div class="field">
+            <label for="companyName">Company name</label>
+            <input id="companyName" name="companyName" type="text" maxlength="80" autocomplete="off" required />
+            <div class="field-error" data-error-for="companyName"></div>
+          </div>
+          <div class="field full">
+            <label for="companyDescription">Company description</label>
+            <textarea id="companyDescription" name="companyDescription" maxlength="400" rows="3" required></textarea>
+            <div class="field-error" data-error-for="companyDescription"></div>
+          </div>
+          <div class="field full">
+            <label for="callPurpose">Call purpose</label>
+            <textarea id="callPurpose" name="callPurpose" maxlength="400" rows="3" required></textarea>
+            <div class="field-error" data-error-for="callPurpose"></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="submit-stage">Stage demo</button>
+            <div class="form-error" id="form-error" role="alert"></div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card chat-hero">
+        <p class="help">Chat widget preview</p>
+        <h2 class="card-title">Talk to the bot</h2>
+        <p class="card-sub" id="chat-status-sub">Turn the line on and stage a demo to open the widget.</p>
+        <div class="chat-mount" id="chat-mount" aria-live="polite"></div>
+        <div class="chat-blocked" id="chat-blocked" hidden>
+          Chat widget isn't configured. Set RETELL_CHAT_AGENT_ID,
+          RETELL_PUBLIC_KEY, and GOOGLE_RECAPTCHA_SITE_KEY in the server env.
+        </div>
+        <p class="hint">
+          Visitors would normally reach this widget embedded on the company
+          site. Here we're mounting it inline for the operator demo.
+        </p>
+      </section>
+
+      <section class="card booking-card" id="booking-card">
+        <h2 class="card-title">Finish the booking</h2>
+        <p class="card-sub">
+          The bot's confirmed a time — complete the real booking below.
+        </p>
+        <div class="booking-frame-wrap">
+          <iframe
+            id="booking-iframe"
+            title="Book a demo on Cal.com"
+            src="about:blank"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </section>
+
+      <section class="card post-call-card" id="post-call-card">
+        <h2 class="card-title">Post-chat review</h2>
+        <p class="card-sub">AI summary, transcript, captured fields, and operator notes.</p>
+        <div id="post-call-content"></div>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Recent chat sessions</h2>
+        <p class="card-sub">Live activity — polls every 5 seconds.</p>
+        <ul class="feed-list" id="feed-list">
+          <li class="feed-item"><span class="feed-meta"><span class="top">Loading…</span></span></li>
+        </ul>
+      </section>
+    </main>
+
+    <footer>
+      <div class="status">Phase 9 · web bot</div>
+    </footer>
+
+    <script src="/assets/call-view.js" defer></script>
+    <script src="/assets/web-chat-dashboard.js" defer></script>
+  </body>
+</html>

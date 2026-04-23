@@ -64,6 +64,18 @@
       "permanent": false
     },
     {
+      "source": "/web-bot/live/history",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/web-bot/live/history",
+      "permanent": false
+    },
+    {
+      "source": "/web-bot/live/calls/:id",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/web-bot/live/calls/:id",
+      "permanent": false
+    },
+    {
       "source": "/talentsift/live",
       "missing": [{ "type": "cookie", "key": "agenticz_session" }],
       "destination": "/login?next=/talentsift/live",
@@ -91,7 +103,7 @@
     { "source": "/voice/speed-to-lead/live/calls/:id", "destination": "/voice/speed-to-lead/live/calls.html" },
     { "source": "/voice/receptionist/live/calls/:id", "destination": "/voice/receptionist/live/calls.html" },
     { "source": "/voice/website-voice-bot/live/calls/:id", "destination": "/voice/website-voice-bot/live/calls.html" },
-    { "source": "/web-bot/live", "destination": "/coming-soon.html?product=web-bot" },
+    { "source": "/web-bot/live/calls/:id", "destination": "/web-bot/live/calls.html" },
     { "source": "/talentsift/live", "destination": "/coming-soon.html?product=talentsift" },
     { "source": "/dashboard-demo/live", "destination": "/coming-soon.html?product=dashboard-demo" }
   ],
@@ -125,7 +137,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.retellai.com wss://*.retellai.com https://*.livekit.cloud wss://*.livekit.cloud https://*.amazonaws.com https://esm.sh https://cdn.jsdelivr.net; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; media-src 'self' blob: mediastream: https://*.retellai.com https://*.livekit.cloud wss://*.retellai.com wss://*.livekit.cloud https://*.amazonaws.com; frame-src https://cal.com https://app.cal.com"
+          "value": "default-src 'self'; script-src 'self' https://esm.sh https://cdn.jsdelivr.net https://dashboard.retellai.com https://www.google.com https://www.gstatic.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data: https://*.retellai.com https://*.amazonaws.com; connect-src 'self' https://*.retellai.com wss://*.retellai.com https://*.livekit.cloud wss://*.livekit.cloud https://*.amazonaws.com https://esm.sh https://cdn.jsdelivr.net https://dashboard.retellai.com https://www.google.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; media-src 'self' blob: mediastream: https://*.retellai.com https://*.livekit.cloud wss://*.retellai.com wss://*.livekit.cloud https://*.amazonaws.com; frame-src https://cal.com https://app.cal.com https://www.google.com"
         }
       ]
     }

@@ -3,6 +3,7 @@ import { buildClearCookie, getSessionUser } from '../../lib/auth.js';
 import {
   setReceptionistLineEnabled,
   setWebsiteVoiceEnabled,
+  setWebChatEnabled,
 } from '../../lib/settings.js';
 
 export default async function handler(req, res) {
@@ -11,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Best-effort: flip both shared lines OFF when someone logs out. Failures
+  // Best-effort: flip all shared lines OFF when someone logs out. Failures
   // here must not block the logout — the cookie still gets cleared.
   try {
     const db = getDb();
@@ -19,6 +20,7 @@ export default async function handler(req, res) {
     const actor = user?.email || 'unknown';
     await setReceptionistLineEnabled(db, false, actor, 'auto_off:logout');
     await setWebsiteVoiceEnabled(db, false, actor, 'auto_off:logout');
+    await setWebChatEnabled(db, false, actor, 'auto_off:logout');
   } catch (err) {
     console.warn('[logout] auto-off failed:', err?.message);
   }
