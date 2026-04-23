@@ -190,7 +190,7 @@ async function saveCallNotes(callId, notes) {
     },
   );
   if (res.status === 401) {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     throw new Error('Session expired');
   }
   if (!res.ok) {
@@ -273,7 +273,7 @@ async function pollCall(id) {
   }
 
   if (res.status === 401) {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return;
   }
   if (res.status === 404) {
@@ -349,7 +349,7 @@ async function loadMe() {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (res.status === 401) {
-      location.replace('/login');
+      location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
       return null;
     }
     if (!res.ok) throw new Error(`status ${res.status}`);
@@ -358,7 +358,7 @@ async function loadMe() {
     document.body.classList.add('ready');
     return data;
   } catch {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return null;
   }
 }
@@ -371,7 +371,7 @@ function wireLogout() {
         credentials: 'same-origin',
       });
     } catch {}
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
   });
 }
 
@@ -442,7 +442,7 @@ function wireForm() {
     }
 
     if (res.status === 401) {
-      location.replace('/login');
+      location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
       return;
     }
 

@@ -1,0 +1,345 @@
+/* Shared styles for the public (unauthenticated) pages: landing, voice sub,
+ * leaf pages. Assumes brand.css has loaded first. */
+
+.topbar {
+  padding: 22px 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.topbar .right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 34px;
+}
+
+.topbar .user-email {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.topbar a.nav-link,
+.topbar button.nav-link {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.topbar a.nav-link:hover,
+.topbar button.nav-link:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+main.public {
+  flex: 1;
+  padding: 56px 28px 96px;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* Eyebrow / heading stack */
+
+.eyebrow {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+main.public > header.title-block h1 {
+  margin: 6px 0 10px;
+  font-family: "Outfit", sans-serif;
+  font-weight: 300;
+  font-size: clamp(34px, 5.2vw, 60px);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+main.public > header.title-block p.lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  max-width: 640px;
+  line-height: 1.55;
+}
+
+main.public > header.title-block .accent {
+  color: var(--gold);
+}
+
+/* Tile grid */
+
+.tiles {
+  display: grid;
+  gap: 18px;
+  margin-top: 12px;
+}
+
+.tiles.cols-4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.tiles.cols-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+@media (max-width: 860px) {
+  .tiles.cols-3,
+  .tiles.cols-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.tile {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 26px 26px 24px;
+  color: var(--fg);
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 200px;
+  position: relative;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+
+.tile:hover {
+  border-color: var(--gold);
+  transform: translateY(-2px);
+}
+
+.tile:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+.tile .number {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.18em;
+}
+
+.tile .title {
+  font-family: "Outfit", sans-serif;
+  font-weight: 700;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+}
+
+.tile .pitch {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tile .explore {
+  margin-top: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color 140ms ease;
+}
+
+.tile:hover .explore {
+  color: var(--gold);
+}
+
+.tile .badge {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* Leaf pages */
+
+.crumbs {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.crumbs a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+.crumbs a:hover {
+  color: var(--gold);
+}
+
+.crumbs .sep {
+  opacity: 0.5;
+}
+
+.leaf-badge {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+section.what-this-does {
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+}
+
+section.what-this-does h2 {
+  margin: 0 0 16px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+section.what-this-does ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 640px;
+}
+
+section.what-this-does li {
+  padding-left: 22px;
+  position: relative;
+}
+
+section.what-this-does li::before {
+  content: "›";
+  position: absolute;
+  left: 0;
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.btn-primary {
+  min-height: 46px;
+  padding: 0 22px;
+  background: var(--gold);
+  color: #050505;
+  border: none;
+  border-radius: var(--radius);
+  font-family: "Outfit", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: background 120ms ease, transform 120ms ease;
+}
+
+.btn-primary:hover {
+  background: var(--gold-hi);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  min-height: 46px;
+  padding: 0 22px;
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: "Outfit", sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+footer.site {
+  padding: 24px 28px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-align: center;
+}
+
+footer.site a {
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 120ms ease;
+}
+
+footer.site a:hover {
+  color: var(--gold);
+}

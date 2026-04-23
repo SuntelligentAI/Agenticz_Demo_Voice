@@ -33,7 +33,7 @@ async function loadMe() {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (res.status === 401) {
-      location.replace('/login');
+      location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
       return null;
     }
     if (!res.ok) throw new Error(`status ${res.status}`);
@@ -42,7 +42,7 @@ async function loadMe() {
     document.body.classList.add('ready');
     return data;
   } catch {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return null;
   }
 }
@@ -62,7 +62,7 @@ async function loadPage(page) {
     return;
   }
   if (res.status === 401) {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return;
   }
   if (!res.ok) {
@@ -77,7 +77,7 @@ async function loadPage(page) {
   if (!data.items || data.items.length === 0) {
     root.innerHTML = `
       <div class="empty-state">
-        No calls yet. <a href="/dashboard">Start your first demo call</a>.
+        No calls yet. <a href="/voice/speed-to-lead/live">Start your first demo call</a>.
       </div>
     `;
     document.getElementById('pagination').hidden = true;
@@ -86,6 +86,12 @@ async function loadPage(page) {
 
   renderTable(root, data.items);
   renderPagination(data);
+}
+
+function callDetailHref(id) {
+  const root = document.getElementById('history-root');
+  const base = root?.dataset?.detailBase || '/voice/speed-to-lead/live/calls';
+  return `${base}/${encodeURIComponent(id)}`;
 }
 
 function renderTable(root, items) {
@@ -115,12 +121,12 @@ function renderTable(root, items) {
     const tr = document.createElement('tr');
     tr.tabIndex = 0;
     tr.addEventListener('click', () => {
-      location.href = `/calls/${encodeURIComponent(row.id)}`;
+      location.href = callDetailHref(row.id);
     });
     tr.addEventListener('keydown', (ev) => {
       if (ev.key === 'Enter' || ev.key === ' ') {
         ev.preventDefault();
-        location.href = `/calls/${encodeURIComponent(row.id)}`;
+        location.href = callDetailHref(row.id);
       }
     });
 
@@ -166,7 +172,7 @@ function wireLogout() {
         credentials: 'same-origin',
       });
     } catch {}
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
   });
 }
 

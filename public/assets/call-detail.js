@@ -34,15 +34,24 @@ function statusText(status) {
 }
 
 function getCallIdFromPath() {
-  const match = /^\/calls\/([^\/?#]+)/.exec(location.pathname);
-  return match ? decodeURIComponent(match[1]) : null;
+  // The detail page can live at either `/calls/:id` (legacy) or
+  // `/voice/speed-to-lead/live/calls/:id` (Phase 6). Grab whatever segment
+  // follows a `/calls/` in the path.
+  const parts = location.pathname.split('/').filter(Boolean);
+  const i = parts.indexOf('calls');
+  if (i < 0 || i === parts.length - 1) return null;
+  try {
+    return decodeURIComponent(parts[i + 1]);
+  } catch {
+    return parts[i + 1];
+  }
 }
 
 async function loadMe() {
   try {
     const res = await fetch('/api/auth/me', { credentials: 'same-origin' });
     if (res.status === 401) {
-      location.replace('/login');
+      location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
       return null;
     }
     if (!res.ok) throw new Error(`status ${res.status}`);
@@ -51,7 +60,7 @@ async function loadMe() {
     document.body.classList.add('ready');
     return data;
   } catch {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return null;
   }
 }
@@ -103,7 +112,7 @@ async function saveNotes(callId, notes) {
     },
   );
   if (res.status === 401) {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     throw new Error('Session expired');
   }
   if (!res.ok) {
@@ -130,7 +139,7 @@ function wireLogout() {
         credentials: 'same-origin',
       });
     } catch {}
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
   });
 }
 
@@ -157,7 +166,7 @@ function wireLogout() {
   }
 
   if (res.status === 401) {
-    location.replace('/login');
+    location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
     return;
   }
   if (res.status === 404) {

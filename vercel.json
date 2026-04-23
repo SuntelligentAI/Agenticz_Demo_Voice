@@ -2,11 +2,41 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/voice/speed-to-lead/live",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/voice/speed-to-lead/live",
+      "permanent": false
+    },
+    {
+      "source": "/voice/speed-to-lead/live/history",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/voice/speed-to-lead/live/history",
+      "permanent": false
+    },
+    {
+      "source": "/voice/speed-to-lead/live/calls/:id",
+      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
+      "destination": "/login?next=/voice/speed-to-lead/live/calls/:id",
+      "permanent": false
+    },
+    { "source": "/dashboard", "destination": "/voice/speed-to-lead/live", "permanent": false },
+    { "source": "/history", "destination": "/voice/speed-to-lead/live/history", "permanent": false },
+    { "source": "/calls/:id", "destination": "/voice/speed-to-lead/live/calls/:id", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/login", "destination": "/login.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/history", "destination": "/history.html" },
-    { "source": "/calls/:id", "destination": "/calls.html" }
+    { "source": "/voice", "destination": "/voice.html" },
+    { "source": "/voice/speed-to-lead", "destination": "/voice/speed-to-lead.html" },
+    { "source": "/voice/receptionist", "destination": "/voice/receptionist.html" },
+    { "source": "/voice/website-voice-bot", "destination": "/voice/website-voice-bot.html" },
+    { "source": "/web-bot", "destination": "/web-bot.html" },
+    { "source": "/talentsift", "destination": "/talentsift.html" },
+    { "source": "/dashboard-demo", "destination": "/dashboard-demo.html" },
+    { "source": "/voice/speed-to-lead/live", "destination": "/dashboard.html" },
+    { "source": "/voice/speed-to-lead/live/history", "destination": "/history.html" },
+    { "source": "/voice/speed-to-lead/live/calls/:id", "destination": "/calls.html" }
   ],
   "headers": [
     {
@@ -38,7 +68,7 @@
         },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.retellai.com https://*.amazonaws.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; media-src 'self' https://*.retellai.com https://*.amazonaws.com"
         }
       ]
     }

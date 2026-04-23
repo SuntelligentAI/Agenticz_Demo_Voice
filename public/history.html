@@ -207,7 +207,8 @@
         <span class="wordmark">AGENTIC<span class="z">Z</span></span>
       </div>
       <div class="right">
-        <a class="btn-ghost" href="/dashboard">New call</a>
+        <a class="btn-ghost" href="/">Demos</a>
+        <a class="btn-ghost" href="/voice/speed-to-lead/live">New call</a>
         <span class="user-email" id="user-email"></span>
         <button type="button" class="btn-ghost" id="logout">Log out</button>
       </div>
@@ -218,7 +219,7 @@
         <h2 class="card-title">Call history</h2>
         <p class="card-sub">Your past demo calls, most recent first.</p>
 
-        <div id="history-root" aria-live="polite">
+        <div id="history-root" aria-live="polite" data-detail-base="/voice/speed-to-lead/live/calls">
           <div class="empty-state">Loading…</div>
         </div>
 
