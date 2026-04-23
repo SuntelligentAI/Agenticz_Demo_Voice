@@ -19,7 +19,7 @@ const CAL_URL = 'https://cal.com/suntelligent-ai/discovery-call';
 // path, change it here and add the new origin to CSP script-src in
 // vercel.json. Docs: https://docs.retellai.com/deploy/chat-widget
 const RETELL_WIDGET_SCRIPT =
-  'https://dashboard.retellai.com/retell-chat-widget/embed.js';
+  'https://dashboard.retellai.com/retell-widget.js';
 const RECAPTCHA_SCRIPT_TEMPLATE =
   'https://www.google.com/recaptcha/api.js?render=';
 
