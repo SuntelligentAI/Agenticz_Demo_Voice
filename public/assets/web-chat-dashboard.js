@@ -339,6 +339,8 @@ function clearMount() {
   if (!mount) return;
   mount.innerHTML = '';
   mount.classList.remove('visible');
+  const existing = document.getElementById('retell-widget');
+  if (existing) existing.remove();
 }
 
 function refreshWidget() {
@@ -371,7 +373,12 @@ function refreshWidget() {
 
   // Render the Retell widget via a <script> tag with data-attributes.
   // Anchor via #chat-mount so the widget lays out inline (not floating).
+  // The Retell widget self-configures by reading data-* attributes from
+  // its own <script> element, which it locates via id="retell-widget".
+  const existing = document.getElementById('retell-widget');
+  if (existing) existing.remove();
   const script = document.createElement('script');
+  script.id = 'retell-widget';
   script.src = RETELL_WIDGET_SCRIPT;
   script.defer = true;
   script.async = true;
