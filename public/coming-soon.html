@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
-    <title>Website Voice Bot — Agenticz</title>
+    <title>Live demo coming soon — Agenticz</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -29,36 +29,35 @@
     </header>
 
     <main class="public">
-      <nav class="crumbs" aria-label="Breadcrumb">
+      <nav class="crumbs" aria-label="Breadcrumb" id="crumbs">
         <a href="/">Demos</a>
         <span class="sep">›</span>
-        <a href="/voice">Voice AI</a>
+        <span id="crumb-category">—</span>
         <span class="sep">›</span>
-        <span>Website Voice Bot</span>
+        <a id="crumb-product-link" href="/">—</a>
+        <span class="sep">›</span>
+        <span>Live</span>
       </nav>
 
       <header class="title-block">
         <span class="leaf-badge">Launching soon</span>
-        <div class="eyebrow">Voice AI · Embedded</div>
-        <h1>Talk to your site, <span class="accent">out loud</span>.</h1>
+        <div class="eyebrow" id="eyebrow">—</div>
+        <h1><span id="product-title">This</span> live demo <span class="accent">coming soon</span>.</h1>
         <p class="lede">
-          A voice agent embedded on your site. Visitors click a button and
-          speak naturally to AI that captures their details and answers in
-          their own language.
+          We're finalising this demo module. Book a live walk-through and we'll
+          show you what it does in real time.
         </p>
       </header>
 
-      <section class="what-this-does">
-        <h2>What this does</h2>
-        <ul>
-          <li>Adds a talk-to-us button to any page on your site</li>
-          <li>Converses with the visitor and captures their requirements</li>
-          <li>Hands off to a human or books a meeting when it matters</li>
-        </ul>
-      </section>
-
       <div class="cta-row">
-        <a class="btn-primary" href="https://cal.com/suntelligent-ai/discovery-call" target="_blank" rel="noopener noreferrer" data-cal-cta>Book a live demo</a>
+        <a
+          class="btn-primary"
+          href="https://cal.com/suntelligent-ai/discovery-call"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-cal-cta
+        >Book a live demo</a>
+        <a class="btn-secondary" id="back-to-product" href="/">Back to product</a>
       </div>
     </main>
 
@@ -68,5 +67,6 @@
     </footer>
 
     <script src="/assets/public-nav.js" defer></script>
+    <script src="/assets/coming-soon.js" defer></script>
   </body>
 </html>
