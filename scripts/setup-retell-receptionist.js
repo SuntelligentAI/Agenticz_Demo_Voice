@@ -22,15 +22,14 @@ import {
   createAgent,
   updateAgent,
   updatePhoneNumber,
+  getAgent,
 } from '../lib/retell.js';
+import { resolveReceptionistVoiceId } from '../lib/retell-setup.js';
 
 const WEBHOOK_ORIGIN =
   process.env.RECEPTIONIST_WEBHOOK_ORIGIN || 'https://demo.agenticz.io';
 
 const AGENT_NAME = 'AGENTICZ_RECEPTIONIST_DO_NOT_EDIT';
-// Safe, widely-available default voice. Operator can change it later in the
-// Retell dashboard without breaking this script.
-const DEFAULT_VOICE_ID = process.env.RETELL_RECEPTIONIST_VOICE_ID || '11labs-Adrian';
 
 const BEGIN_MESSAGE = `Good morning, you've reached {{company_name}}, this is {{agent_name}} — how can I help you today?`;
 
@@ -109,8 +108,10 @@ if (llmId) {
 
 // --- Agent ---------------------------------------------------------------
 
-// Only fields shared between create + update — voice is set on create and we
-// don't overwrite the operator's later voice tweaks on subsequent runs.
+const voiceId = await resolveReceptionistVoiceId({ getAgent });
+
+// voice_id is written on every run so changes to Speed To Lead's voice
+// propagate here — that's the whole point of the parity helper above.
 const agentCommonFields = {
   agent_name: AGENT_NAME,
   response_engine: { type: 'retell-llm', llm_id: llmId },
@@ -119,6 +120,7 @@ const agentCommonFields = {
   // webhook. If your Retell plan or API version uses a different field
   // name, update it here and in the dashboard to match.
   dynamic_variables_webhook_url: dynVarWebhookUrl,
+  voice_id: voiceId,
 };
 
 if (agentId) {
@@ -126,10 +128,7 @@ if (agentId) {
   await updateAgent(agentId, agentCommonFields);
 } else {
   console.log('Creating new Retell agent…');
-  const agent = await createAgent({
-    ...agentCommonFields,
-    voice_id: DEFAULT_VOICE_ID,
-  });
+  const agent = await createAgent(agentCommonFields);
   agentId = agent?.agent_id || agent?.id;
   if (!agentId) {
     throw new Error(

@@ -72,6 +72,19 @@ const statements = [
     updated_at INTEGER NOT NULL,
     updated_by TEXT
   )`,
+
+  // Phase 7 wrap-up — append-only log of every system_settings write, so we
+  // can surface "auto-off" reasons in the UI without losing history.
+  `CREATE TABLE IF NOT EXISTS system_settings_log (
+    id TEXT PRIMARY KEY,
+    key TEXT NOT NULL,
+    value TEXT NOT NULL,
+    updated_by TEXT,
+    reason TEXT,
+    created_at INTEGER NOT NULL
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_system_settings_log_key_created
+     ON system_settings_log(key, created_at DESC)`,
 ];
 
 const db = getDb();

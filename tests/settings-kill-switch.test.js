@@ -19,7 +19,11 @@ function makeFakeDb() {
         const v = store.get(args[0]);
         return { rows: v == null ? [] : [{ value: v }] };
       }
-      if (/^\s*INSERT INTO system_settings/.test(sql)) {
+      if (/^\s*INSERT INTO system_settings_log/.test(sql)) {
+        // args: [id, key, value, updated_by, reason, created_at]
+        return { rows: [] };
+      }
+      if (/^\s*INSERT INTO system_settings\b/.test(sql)) {
         // args: [key, value, updated_at, updated_by]
         store.set(args[0], args[1]);
         return { rows: [] };

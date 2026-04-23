@@ -115,6 +115,31 @@ function renderLineState() {
   }
 }
 
+function renderAutoOffBanner({ enabled, reason }) {
+  const el = document.getElementById('auto-off-banner');
+  if (!el) return;
+  // Only show the banner when the line is currently OFF and the last change
+  // was made by an auto-trigger. A manual OFF should stay quiet.
+  if (enabled || !reason || !reason.startsWith('auto_off:')) {
+    el.hidden = true;
+    el.textContent = '';
+    return;
+  }
+  const label = {
+    'auto_off:logout': 'Line switched off — operator logged out.',
+    'auto_off:tab_close': 'Line switched off — dashboard tab was closed.',
+    'auto_off:idle_30min':
+      'Line switched off — 30 minutes of no stage activity.',
+  }[reason] || `Line switched off — ${reason}.`;
+  el.innerHTML = '';
+  el.appendChild(document.createTextNode(label));
+  const hint = document.createElement('span');
+  hint.className = 'hint';
+  hint.textContent = 'Toggle ON above to resume.';
+  el.appendChild(hint);
+  el.hidden = false;
+}
+
 async function loadLineState() {
   try {
     const r = await fetch('/api/settings/receptionist-line', { credentials: 'same-origin' });
@@ -126,6 +151,7 @@ async function loadLineState() {
       RECEPTIONIST_NUMBER = data.number.trim();
     }
     renderLineState();
+    renderAutoOffBanner({ enabled: lineEnabled, reason: data.reason });
     // If a stage is already rendered, re-render the number display.
     if (currentStage) {
       document.getElementById('staged-number').textContent =
@@ -166,7 +192,37 @@ async function setLineState(next) {
 
 function wireLineToggle() {
   document.getElementById('line-toggle').addEventListener('click', () => {
+    // Any deliberate toggle clears the auto-off banner immediately.
+    const banner = document.getElementById('auto-off-banner');
+    if (banner) { banner.hidden = true; banner.textContent = ''; }
     setLineState(!lineEnabled);
+  });
+}
+
+// Best-effort: when the operator closes the tab or navigates away, flip
+// the shared line OFF so an unattended dashboard doesn't leave the number
+// answering under a stale context. Mobile + flaky networks may drop this
+// beacon; the server-side idle check is the safety net.
+function sendAutoOffBeacon(reason) {
+  if (!lineEnabled) return;
+  try {
+    const body = JSON.stringify({ enabled: false, reason });
+    // Plain string → text/plain; the server parses it defensively.
+    navigator.sendBeacon('/api/settings/receptionist-line', body);
+  } catch {}
+}
+
+function wireAutoOffBeacons() {
+  window.addEventListener('pagehide', () => {
+    sendAutoOffBeacon('auto_off:tab_close');
+  });
+  window.addEventListener('beforeunload', () => {
+    sendAutoOffBeacon('auto_off:tab_close');
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      sendAutoOffBeacon('auto_off:tab_close');
+    }
   });
 }
 
@@ -452,6 +508,7 @@ function startFeed() {
   wireLineToggle();
   wireStageForm();
   wireStageActions();
+  wireAutoOffBeacons();
   await loadLineState();
   await loadStage();
   startFeed();

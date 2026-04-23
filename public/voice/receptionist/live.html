@@ -123,6 +123,22 @@
       .line-toggle:hover:not(:disabled) { background: var(--gold-hi); }
       .line-toggle.off:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); background: transparent; }
 
+      .auto-off-banner {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--gold);
+        border-radius: var(--radius);
+        padding: 12px 16px;
+        font-family: "JetBrains Mono", ui-monospace, monospace;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        color: var(--fg);
+      }
+      .auto-off-banner .hint {
+        color: var(--muted);
+        margin-left: 6px;
+      }
+
       /* Staged card */
       .stage-field {
         display: grid;
@@ -334,6 +350,14 @@
           Turn line on
         </button>
       </section>
+
+      <div
+        id="auto-off-banner"
+        class="auto-off-banner"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
 
       <section class="card" id="staged-card" hidden>
         <h2 class="card-title">Staged demo</h2>

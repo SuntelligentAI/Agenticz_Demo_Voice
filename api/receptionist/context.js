@@ -13,6 +13,7 @@ import {
   getFallbackContext,
 } from '../../lib/receptionist.js';
 import { isReceptionistLineEnabled } from '../../lib/settings.js';
+import { maybeAutoOffLine } from '../../lib/auto-off.js';
 
 export const config = {
   api: { bodyParser: false },
@@ -68,6 +69,9 @@ export default async function handler(req, res) {
   }
 
   const db = getDb();
+  // Idle safety net: if the line has been on > 30 min with no stage
+  // activity, flip it off right here before we decide what to serve.
+  await maybeAutoOffLine({ db });
   const enabled = await isReceptionistLineEnabled(db);
 
   let source = 'fallback';

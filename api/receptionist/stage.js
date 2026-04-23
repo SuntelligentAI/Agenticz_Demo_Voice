@@ -5,6 +5,7 @@ import {
   getActiveStageForUser,
   clearStageForUser,
 } from '../../lib/receptionist.js';
+import { maybeAutoOffLine } from '../../lib/auto-off.js';
 
 export default async function handler(req, res) {
   const method = req.method || 'GET';
@@ -16,6 +17,9 @@ export default async function handler(req, res) {
   const db = getDb();
   const user = await getSessionUser(req, db);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  // Lazy idle auto-off — cheap and keeps the line honest on polling reads.
+  await maybeAutoOffLine({ db });
 
   res.setHeader('Cache-Control', 'no-store');
 
