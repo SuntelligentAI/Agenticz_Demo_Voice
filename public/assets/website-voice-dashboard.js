@@ -325,6 +325,9 @@ function wireStageActions() {
 
 let retellClient = null;
 let currentDemoCallId = null;
+// Diagnostic counters — make duplicate clients / duplicate listeners visible.
+let retellClientSeq = 0;
+let orbClickSeq = 0;
 const orbEl = () => document.getElementById('orb');
 const orbCaptionEl = () => document.getElementById('orb-caption');
 const orbErrorEl = () => document.getElementById('orb-error');
@@ -428,7 +431,17 @@ async function startWebCall() {
   currentDemoCallId = body.demoCallId;
 
   try {
+    retellClientSeq += 1;
+    const prevSeq = retellClient?.__agenticzSeq ?? null;
     retellClient = new SdkClass();
+    retellClient.__agenticzSeq = retellClientSeq;
+    console.log('[orb-sdk] new RetellWebClient', {
+      newSeq: retellClient.__agenticzSeq,
+      previousClientSeq: prevSeq,
+      previousStillExisted: prevSeq !== null,
+    });
+    // eslint-disable-next-line no-console
+    console.trace('[orb-sdk] new RetellWebClient trace');
   } catch (err) {
     orb.disabled = false;
     setOrbCaption('Click to talk');
@@ -436,20 +449,41 @@ async function startWebCall() {
     return;
   }
 
-  retellClient.on?.('call_started', () => {
+  const clientSeq = retellClient.__agenticzSeq;
+
+  retellClient.on?.('call_started', (payload) => {
+    console.log('[orb-sdk] event call_started', { clientSeq, callId: payload?.call_id });
     setOrbStateFromEvent('call_started');
     setOrbCaption('On call');
     endCallBtnEl().hidden = false;
   });
-  retellClient.on?.('agent_start_talking', () => setOrbStateFromEvent('agent_start_talking'));
-  retellClient.on?.('agent_stop_talking', () => setOrbStateFromEvent('agent_stop_talking'));
-  retellClient.on?.('call_ended', (payload) => handleCallEnded(payload, /*errored=*/ false));
-  retellClient.on?.('error', (payload) => handleCallEnded(payload, /*errored=*/ true));
+  retellClient.on?.('agent_start_talking', () => {
+    console.log('[orb-sdk] event agent_start_talking', { clientSeq });
+    setOrbStateFromEvent('agent_start_talking');
+  });
+  retellClient.on?.('agent_stop_talking', () => {
+    console.log('[orb-sdk] event agent_stop_talking', { clientSeq });
+    setOrbStateFromEvent('agent_stop_talking');
+  });
+  retellClient.on?.('call_ended', (payload) => {
+    console.log('[orb-sdk] event call_ended', { clientSeq });
+    handleCallEnded(payload, /*errored=*/ false);
+  });
+  retellClient.on?.('error', (payload) => {
+    console.log('[orb-sdk] event error', { clientSeq, message: payload?.message });
+    handleCallEnded(payload, /*errored=*/ true);
+  });
 
   try {
+    console.log('[orb-sdk] startCall', {
+      clientSeq,
+      retellCallId: body.callId,
+      demoCallId: body.demoCallId,
+    });
     await retellClient.startCall({ accessToken: body.accessToken });
     orb.disabled = false;
   } catch (err) {
+    console.log('[orb-sdk] startCall threw', { clientSeq, message: err?.message });
     orb.disabled = false;
     setOrbCaption('Click to talk');
     orbErrorEl().textContent =
@@ -459,13 +493,19 @@ async function startWebCall() {
 }
 
 function handleCallEnded(_payload, errored) {
+  const endingSeq = retellClient?.__agenticzSeq ?? null;
   setOrbStateFromEvent('call_ended');
   setOrbCaption('Click to talk');
   endCallBtnEl().hidden = true;
   const orb = orbEl();
   orb.disabled = false;
 
-  try { retellClient?.stopCall?.(); } catch {}
+  try {
+    if (retellClient?.stopCall) {
+      console.log('[orb-sdk] stopCall (handleCallEnded)', { clientSeq: endingSeq });
+      retellClient.stopCall();
+    }
+  } catch {}
   retellClient = null;
 
   if (errored) {
@@ -482,10 +522,22 @@ function handleCallEnded(_payload, errored) {
 
 function wireOrb() {
   orbEl().addEventListener('click', () => {
+    orbClickSeq += 1;
+    console.log('[orb-sdk] orb click', {
+      click: orbClickSeq,
+      callAlreadyActive: Boolean(retellClient),
+      existingClientSeq: retellClient?.__agenticzSeq ?? null,
+    });
     startWebCall();
   });
   endCallBtnEl().addEventListener('click', () => {
-    try { retellClient?.stopCall?.(); } catch {}
+    const endingSeq = retellClient?.__agenticzSeq ?? null;
+    try {
+      if (retellClient?.stopCall) {
+        console.log('[orb-sdk] stopCall (end button)', { clientSeq: endingSeq });
+        retellClient.stopCall();
+      }
+    } catch {}
     handleCallEnded(null, /*errored=*/ false);
   });
 }
