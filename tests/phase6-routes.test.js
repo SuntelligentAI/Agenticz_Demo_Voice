@@ -148,14 +148,10 @@ describe('gated live routes (vercel.json)', () => {
 });
 
 describe('coming-soon shared page', () => {
-  // /voice/receptionist/live is NO LONGER a coming-soon page in Phase 7 —
-  // it's a real live dashboard. The 4 remaining coming-soon products still
-  // share coming-soon.html.
+  // Receptionist (Phase 7) and Website Voice Bot (Phase 8) both graduated
+  // from coming-soon to real live dashboards. Three products still share
+  // coming-soon.html.
   const COMING_SOON_LIVE_PATHS = [
-    {
-      path: '/voice/website-voice-bot/live',
-      product: 'website-voice-bot',
-    },
     { path: '/web-bot/live', product: 'web-bot' },
     { path: '/talentsift/live', product: 'talentsift' },
     { path: '/dashboard-demo/live', product: 'dashboard-demo' },

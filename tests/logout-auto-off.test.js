@@ -111,11 +111,22 @@ describe('POST /api/auth/logout — auto-off trigger A', () => {
     expect(setCookie).toMatch(/^agenticz_session=/);
     expect(setCookie).toMatch(/Max-Age=0/);
 
-    // Line flipped off
+    // Both product lines get flipped off — receptionist AND website voice.
     expect(mocks.db.state.settings.get('receptionist_line_enabled')).toBe('false');
-    const log = mocks.db.state.logs.at(-1);
-    expect(log).toMatchObject({
-      key: 'receptionist_line_enabled',
+    expect(mocks.db.state.settings.get('website_voice_enabled')).toBe('false');
+
+    const receptionistLog = mocks.db.state.logs.find(
+      (l) => l.key === 'receptionist_line_enabled',
+    );
+    expect(receptionistLog).toMatchObject({
+      value: 'false',
+      reason: 'auto_off:logout',
+      updated_by: 'gs@example.com',
+    });
+    const webVoiceLog = mocks.db.state.logs.find(
+      (l) => l.key === 'website_voice_enabled',
+    );
+    expect(webVoiceLog).toMatchObject({
       value: 'false',
       reason: 'auto_off:logout',
       updated_by: 'gs@example.com',
@@ -131,11 +142,14 @@ describe('POST /api/auth/logout — auto-off trigger A', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.getHeader('Set-Cookie')).toMatch(/Max-Age=0/);
-    // Flip still happens with updated_by='unknown'
+    // Both lines flipped with updated_by='unknown'
     expect(mocks.db.state.settings.get('receptionist_line_enabled')).toBe('false');
-    const log = mocks.db.state.logs.at(-1);
-    expect(log.reason).toBe('auto_off:logout');
-    expect(log.updated_by).toBe('unknown');
+    expect(mocks.db.state.settings.get('website_voice_enabled')).toBe('false');
+    for (const log of mocks.db.state.logs) {
+      expect(log.reason).toBe('auto_off:logout');
+      expect(log.updated_by).toBe('unknown');
+    }
+    expect(mocks.db.state.logs.length).toBeGreaterThanOrEqual(2);
   });
 
   it('returns 405 for non-POST methods', async () => {
