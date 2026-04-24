@@ -100,6 +100,7 @@
     { "source": "/web-bot", "destination": "/web-bot.html" },
     { "source": "/talentsift", "destination": "/talentsift.html" },
     { "source": "/dashboard-demo", "destination": "/dashboard-demo.html" },
+    { "source": "/web-bot/live", "destination": "/api/web-bot/live" },
     { "source": "/voice/speed-to-lead/live/calls/:id", "destination": "/voice/speed-to-lead/live/calls.html" },
     { "source": "/voice/receptionist/live/calls/:id", "destination": "/voice/receptionist/live/calls.html" },
     { "source": "/voice/website-voice-bot/live/calls/:id", "destination": "/voice/website-voice-bot/live/calls.html" },

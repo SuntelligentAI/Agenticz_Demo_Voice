@@ -20,8 +20,6 @@ const CAL_URL = 'https://cal.com/suntelligent-ai/discovery-call';
 // vercel.json. Docs: https://docs.retellai.com/deploy/chat-widget
 const RETELL_WIDGET_SCRIPT =
   'https://dashboard.retellai.com/retell-widget.js';
-const RECAPTCHA_SCRIPT_TEMPLATE =
-  'https://www.google.com/recaptcha/api.js?render=';
 
 // --- helpers -------------------------------------------------------------
 
@@ -322,18 +320,6 @@ function wireStageActions() {
 
 // --- widget mount --------------------------------------------------------
 
-let recaptchaInjected = false;
-
-function injectRecaptcha(siteKey) {
-  if (recaptchaInjected || !siteKey) return;
-  recaptchaInjected = true;
-  const s = document.createElement('script');
-  s.src = RECAPTCHA_SCRIPT_TEMPLATE + encodeURIComponent(siteKey);
-  s.defer = true;
-  s.async = true;
-  document.head.appendChild(s);
-}
-
 function clearMount() {
   const mount = document.getElementById('chat-mount');
   if (!mount) return;
@@ -357,6 +343,13 @@ function refreshWidget() {
     statusSub.textContent = 'Chat widget is not configured on the server.';
     return;
   }
+  if (!widgetConfig.recaptchaSiteKey) {
+    blocked.hidden = false;
+    blocked.textContent =
+      'Chat widget unavailable — reCAPTCHA not configured.';
+    statusSub.textContent = '';
+    return;
+  }
 
   if (!lineEnabled) {
     statusSub.textContent = 'Line is OFF. Turn it on to mount the widget.';
@@ -366,8 +359,6 @@ function refreshWidget() {
     statusSub.textContent = 'Stage a demo above to mount the widget with context.';
     return;
   }
-
-  injectRecaptcha(widgetConfig.recaptchaSiteKey);
 
   statusSub.textContent = `Chatting as ${currentStage.agentName} from ${currentStage.companyName}.`;
 
