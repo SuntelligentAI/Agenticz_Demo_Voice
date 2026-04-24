@@ -5,6 +5,36 @@
 // - Cal.com iframe handoff after session
 // - Live feed polling /api/calls?product=web_bot
 
+// Diagnostic: intercept POST to Retell create-chat so we can log the
+// response body when reCAPTCHA verification fails. Must install before
+// the widget runs. The dashboard script is `defer`red and the widget is
+// injected even later, so this wrapper is live for every widget request.
+(function installCreateChatDiagnostic() {
+  if (typeof window === 'undefined' || !window.fetch) return;
+  if (window.__agenticzChatFetchWrapped) return;
+  window.__agenticzChatFetchWrapped = true;
+  const orig = window.fetch.bind(window);
+  window.fetch = async function (input, init) {
+    const resp = await orig(input, init);
+    try {
+      const url = typeof input === 'string' ? input : input?.url || '';
+      if (url.includes('api.retellai.com/create-chat')) {
+        if (!resp.ok) {
+          const body = await resp.clone().text().catch(() => '<unreadable>');
+          console.warn(
+            '[recaptcha-debug] POST /create-chat failed',
+            resp.status,
+            body,
+          );
+        } else {
+          console.info('[recaptcha-debug] POST /create-chat ok', resp.status);
+        }
+      }
+    } catch {}
+    return resp;
+  };
+})();
+
 const RULES = {
   agentName: { min: 2, max: 40, pattern: /^[\p{L}\s'\-]+$/u, label: 'Agent name' },
   companyName: { min: 2, max: 80, label: 'Company name' },
@@ -65,6 +95,64 @@ function formatDuration(seconds) {
 }
 function loginRedirect() {
   location.replace('/login?next=' + encodeURIComponent(location.pathname + location.search));
+}
+
+function clearRetellWidgetState() {
+  try {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.startsWith('retell-') || k.startsWith('retellai-'))) keys.push(k);
+    }
+    for (const k of keys) localStorage.removeItem(k);
+    if (keys.length) {
+      console.info('[web-chat] cleared widget localStorage keys:', keys);
+    }
+  } catch (e) {
+    console.warn('[web-chat] failed to clear widget state:', e);
+  }
+}
+
+function debugRecaptcha(phase) {
+  try {
+    const trunc = (s) =>
+      typeof s === 'string' && s.length > 0 ? s.slice(0, 10) : '<empty>';
+    const grecaptchaExists =
+      typeof window !== 'undefined' && typeof window.grecaptcha !== 'undefined';
+
+    const scripts = Array.from(
+      document.querySelectorAll('script[src*="recaptcha/api.js"]'),
+    );
+    const recaptchaSrc = scripts[0]?.src || '';
+    const renderMatch = recaptchaSrc.match(/[?&]render=([^&]+)/);
+    const serverKey = renderMatch ? decodeURIComponent(renderMatch[1]) : '';
+
+    const widgetScript = document.getElementById('retell-widget');
+    const widgetKey = widgetScript?.getAttribute('data-recaptcha-key') || '';
+
+    console.info(
+      `[recaptcha-debug] (${phase}) window.grecaptcha present:`,
+      grecaptchaExists,
+    );
+    console.info(
+      `[recaptcha-debug] (${phase}) <head> recaptcha api.js tags:`,
+      scripts.length,
+    );
+    console.info(
+      `[recaptcha-debug] (${phase}) server-injected site key (first 10):`,
+      trunc(serverKey),
+    );
+    console.info(
+      `[recaptcha-debug] (${phase}) data-recaptcha-key on widget (first 10):`,
+      trunc(widgetKey),
+    );
+    console.info(
+      `[recaptcha-debug] (${phase}) keys match:`,
+      Boolean(serverKey && widgetKey && serverKey === widgetKey),
+    );
+  } catch (e) {
+    console.warn('[recaptcha-debug] failed:', e);
+  }
 }
 
 // --- auth / nav ----------------------------------------------------------
@@ -171,6 +259,7 @@ async function setLineState(next) {
     if (!r.ok) return;
     const data = await r.json();
     lineEnabled = Boolean(data.enabled);
+    if (!lineEnabled) clearRetellWidgetState();
     renderLineState();
     refreshWidget();
   } finally {
@@ -295,6 +384,7 @@ function wireStageForm() {
       const data = await r.json().catch(() => ({}));
       if (!r.ok) { setFormError(data.error || `Could not stage (${r.status}).`); return; }
       for (const k of FIELD_KEYS) document.getElementById(k).value = '';
+      clearRetellWidgetState();
       renderStage(data.stage);
     } catch {
       setFormError('Network error. Try again.');
@@ -314,6 +404,7 @@ function wireStageActions() {
       });
       if (r.status === 401) { loginRedirect(); return; }
     } catch {}
+    clearRetellWidgetState();
     renderStage(null);
   });
 }
@@ -398,6 +489,7 @@ function refreshWidget() {
 
   mount.appendChild(script);
   mount.classList.add('visible');
+  debugRecaptcha('widget-mounted');
 }
 
 // --- post-session + feed + Cal.com ---------------------------------------
@@ -530,5 +622,9 @@ function startFeed() {
   wireAutoOffBeacons();
   await loadLineState();
   await loadStage();
+  // On page load with no active stage, reset widget state so the next
+  // demo opens with a clean conversation.
+  if (!currentStage) clearRetellWidgetState();
+  debugRecaptcha('boot');
   startFeed();
 })();
