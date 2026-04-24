@@ -181,7 +181,16 @@ function wireLogout() {
 // --- line toggle + widget config -----------------------------------------
 
 let lineEnabled = false;
-let widgetConfig = { chatAgentId: null, publicKey: null, recaptchaSiteKey: null };
+// recaptchaSiteKey is server-rendered into window.__RECAPTCHA_SITE_KEY__
+// by api/web-bot/live.js — it MUST NOT be fetched from an API.
+let widgetConfig = {
+  chatAgentId: null,
+  publicKey: null,
+  recaptchaSiteKey:
+    typeof window !== 'undefined' && typeof window.__RECAPTCHA_SITE_KEY__ === 'string'
+      ? window.__RECAPTCHA_SITE_KEY__
+      : null,
+};
 
 function renderLineState() {
   const pill = document.getElementById('line-pill');
@@ -229,9 +238,9 @@ async function loadLineState() {
     const data = await r.json();
     lineEnabled = Boolean(data.enabled);
     widgetConfig = {
+      ...widgetConfig,
       chatAgentId: data.chatAgentId || null,
       publicKey: data.publicKey || null,
-      recaptchaSiteKey: data.recaptchaSiteKey || null,
     };
     renderLineState();
     renderAutoOffBanner({ enabled: lineEnabled, reason: data.reason });

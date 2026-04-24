@@ -40,6 +40,9 @@ export default async function handler(req, res) {
     const enabled = await isWebChatEnabled(db);
     const lastLog = await getLatestLogEntry(db, WEB_CHAT_ENABLED_KEY);
     // Expose the client-side public widget config the dashboard needs.
+    // Note: GOOGLE_RECAPTCHA_SITE_KEY is intentionally NOT returned here.
+    // The site key must come from the server-rendered HTML (window global
+    // set by api/web-bot/live.js), not from a client-side fetch.
     return res.status(200).json({
       enabled,
       reason: lastLog?.reason ?? null,
@@ -47,7 +50,6 @@ export default async function handler(req, res) {
       updatedAt: lastLog?.createdAt ?? null,
       chatAgentId: process.env.RETELL_CHAT_AGENT_ID || null,
       publicKey: process.env.RETELL_PUBLIC_KEY || null,
-      recaptchaSiteKey: process.env.GOOGLE_RECAPTCHA_SITE_KEY || null,
     });
   }
 

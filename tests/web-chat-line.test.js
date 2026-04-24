@@ -126,8 +126,10 @@ describe('GET /api/settings/web-chat-line', () => {
       enabled: false,
       chatAgentId: 'agent_chat_test',
       publicKey: 'public_key_test',
-      recaptchaSiteKey: 'recaptcha_site_key_test',
     });
+    // The reCAPTCHA site key must NOT be returned by this API — it comes
+    // from server-rendered HTML only (api/web-bot/live.js).
+    expect(res.body).not.toHaveProperty('recaptchaSiteKey');
   });
 });
 
