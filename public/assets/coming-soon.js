@@ -24,13 +24,6 @@ const PRODUCTS = {
     marketingPath: '/web-bot',
     categoryPath: '/',
   },
-  talentsift: {
-    title: 'TalentSift',
-    category: 'Hiring',
-    eyebrow: 'Hiring',
-    marketingPath: '/talentsift',
-    categoryPath: '/',
-  },
   'dashboard-demo': {
     title: 'Command Dashboard',
     category: 'Leadership',

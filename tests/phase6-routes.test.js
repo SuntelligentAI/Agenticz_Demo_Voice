@@ -103,7 +103,6 @@ describe('gated live routes (vercel.json)', () => {
     '/web-bot/live',
     '/web-bot/live/history',
     '/web-bot/live/calls/:id',
-    '/talentsift/live',
     '/dashboard-demo/live',
   ];
 
@@ -152,9 +151,9 @@ describe('gated live routes (vercel.json)', () => {
 describe('coming-soon shared page', () => {
   // Receptionist (Phase 7), Website Voice Bot (Phase 8), and Web Bot
   // (Phase 9) all graduated from coming-soon to real live dashboards.
-  // Two products still share coming-soon.html.
+  // TalentSift now links out to its own app at talentsift.agenticz.io.
+  // Only Command Dashboard still uses coming-soon.html.
   const COMING_SOON_LIVE_PATHS = [
-    { path: '/talentsift/live', product: 'talentsift' },
     { path: '/dashboard-demo/live', product: 'dashboard-demo' },
   ];
 

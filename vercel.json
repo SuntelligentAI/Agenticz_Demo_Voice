@@ -81,12 +81,6 @@
       "permanent": false
     },
     {
-      "source": "/talentsift/live",
-      "missing": [{ "type": "cookie", "key": "agenticz_session" }],
-      "destination": "/login?next=/talentsift/live",
-      "permanent": false
-    },
-    {
       "source": "/dashboard-demo/live",
       "missing": [{ "type": "cookie", "key": "agenticz_session" }],
       "destination": "/login?next=/dashboard-demo/live",
@@ -110,7 +104,6 @@
     { "source": "/voice/receptionist/live/calls/:id", "destination": "/voice/receptionist/live/calls.html" },
     { "source": "/voice/website-voice-bot/live/calls/:id", "destination": "/voice/website-voice-bot/live/calls.html" },
     { "source": "/web-bot/live/calls/:id", "destination": "/web-bot/live/calls.html" },
-    { "source": "/talentsift/live", "destination": "/coming-soon.html?product=talentsift" },
     { "source": "/dashboard-demo/live", "destination": "/coming-soon.html?product=dashboard-demo" }
   ],
   "headers": [
