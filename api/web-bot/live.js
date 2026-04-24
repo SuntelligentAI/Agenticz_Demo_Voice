@@ -9,10 +9,12 @@ import path from 'node:path';
 // it alongside this function.
 const HTML_PATH = path.join(process.cwd(), 'templates', 'web-bot', 'live.html');
 let TEMPLATE = null;
+let TEMPLATE_LOAD_ERROR = null;
 try {
   TEMPLATE = readFileSync(HTML_PATH, 'utf8');
 } catch (err) {
-  console.error('[web-bot/live] failed to read template:', err?.message || err);
+  TEMPLATE_LOAD_ERROR = err?.message || String(err);
+  console.error('[web-bot/live] failed to read template:', TEMPLATE_LOAD_ERROR);
 }
 
 const SITE_KEY_PLACEHOLDER = '{{RECAPTCHA_SITE_KEY}}';
@@ -50,6 +52,22 @@ export default function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   const siteKey = process.env.GOOGLE_RECAPTCHA_SITE_KEY;
+
+  // Diagnostic: log whether the env var is set (boolean only, never the
+  // value), whether the template was loaded from disk, and its byte length.
+  // This makes Vercel log inspection sufficient to diagnose whichever of the
+  // two failure modes is live at the moment.
+  console.info(
+    '[web-bot/live] diag',
+    JSON.stringify({
+      envSet: Boolean(siteKey),
+      templateFound: TEMPLATE !== null,
+      templateBytes: TEMPLATE ? TEMPLATE.length : 0,
+      templatePath: HTML_PATH,
+      templateLoadError: TEMPLATE_LOAD_ERROR,
+      cwd: process.cwd(),
+    }),
+  );
 
   if (!siteKey) {
     console.warn(

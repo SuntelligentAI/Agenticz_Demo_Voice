@@ -2,6 +2,11 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/web-bot/live.js": {
+      "includeFiles": "templates/web-bot/live.html"
+    }
+  },
   "redirects": [
     {
       "source": "/voice/speed-to-lead/live",
