@@ -15,59 +15,34 @@ try {
   console.error('[web-bot/live] failed to read template:', err?.message || err);
 }
 
-const RECAPTCHA_ORIGIN = 'https://www.google.com/recaptcha/api.js';
-
-function escapeAttr(v) {
-  return String(v).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[c]));
-}
-
-function escapeForJsString(v) {
-  return String(v)
-    .replace(/\\/g, '\\\\')
-    .replace(/"/g, '\\"')
-    .replace(/</g, '\\u003c')
-    .replace(/>/g, '\\u003e')
-    .replace(/ /g, '\\u2028')
-    .replace(/ /g, '\\u2029');
-}
+const SITE_KEY_PLACEHOLDER = '{{RECAPTCHA_SITE_KEY}}';
+const SITE_KEY_JSON_PLACEHOLDER = '{{RECAPTCHA_SITE_KEY_JSON}}';
 
 function renderUnconfiguredPage() {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
-    <meta name="color-scheme" content="dark" />
-    <title>Web Bot — reCAPTCHA not configured — Agenticz</title>
-    <link rel="stylesheet" href="/assets/brand.css" />
-    <style>
-      body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 40px 20px; }
-      .notice {
-        max-width: 520px; padding: 32px;
-        background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
-        font-family: "JetBrains Mono", ui-monospace, monospace;
-        font-size: 14px; color: var(--fg); text-align: center;
-      }
-      .notice h1 { margin: 0 0 12px; font-family: "Outfit", sans-serif; font-weight: 500; font-size: 22px; }
-      .notice p { margin: 0; color: var(--muted); line-height: 1.6; }
-      code { color: var(--gold); }
-    </style>
-  </head>
-  <body>
-    <div class="notice">
-      <h1>reCAPTCHA not configured</h1>
-      <p>The environment variable <code>GOOGLE_RECAPTCHA_SITE_KEY</code> is not set on this deployment. An operator must set it (Production + Preview + Development) and redeploy.</p>
-    </div>
-  </body>
-</html>
-`;
+  return '<!doctype html>\n'
+    + '<html lang="en">\n'
+    + '  <head>\n'
+    + '    <meta charset="utf-8" />\n'
+    + '    <meta name="viewport" content="width=device-width, initial-scale=1" />\n'
+    + '    <meta name="robots" content="noindex, nofollow" />\n'
+    + '    <meta name="color-scheme" content="dark" />\n'
+    + '    <title>Web Bot — reCAPTCHA not configured — Agenticz</title>\n'
+    + '    <link rel="stylesheet" href="/assets/brand.css" />\n'
+    + '    <style>\n'
+    + '      body { display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 40px 20px; }\n'
+    + '      .notice { max-width: 520px; padding: 32px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; color: var(--fg); text-align: center; }\n'
+    + '      .notice h1 { margin: 0 0 12px; font-family: "Outfit", sans-serif; font-weight: 500; font-size: 22px; }\n'
+    + '      .notice p { margin: 0; color: var(--muted); line-height: 1.6; }\n'
+    + '      code { color: var(--gold); }\n'
+    + '    </style>\n'
+    + '  </head>\n'
+    + '  <body>\n'
+    + '    <div class="notice">\n'
+    + '      <h1>reCAPTCHA not configured</h1>\n'
+    + '      <p>The environment variable <code>GOOGLE_RECAPTCHA_SITE_KEY</code> is not set on this deployment. An operator must set it (Production + Preview + Development) and redeploy.</p>\n'
+    + '    </div>\n'
+    + '  </body>\n'
+    + '</html>\n';
 }
 
 export default function handler(req, res) {
@@ -85,18 +60,21 @@ export default function handler(req, res) {
 
   if (!TEMPLATE) {
     console.error('[web-bot/live] template not loaded');
-    return res.status(500).send('<!doctype html><html><body>Internal error: template missing.</body></html>');
+    return res
+      .status(500)
+      .send('<!doctype html><html><body>Internal error: template missing.</body></html>');
   }
 
-  // Inject BEFORE </head>:
-  //   1. Google reCAPTCHA api.js loader, keyed with the site key from env
-  //   2. An inline script that sets window.__RECAPTCHA_SITE_KEY__ so the
-  //      dashboard JS can set data-recaptcha-key on the widget without
-  //      fetching the key from an API.
-  const injected =
-    `<script src="${RECAPTCHA_ORIGIN}?render=${escapeAttr(siteKey)}"></script>\n` +
-    `    <script>window.__RECAPTCHA_SITE_KEY__ = "${escapeForJsString(siteKey)}";</script>`;
+  // Safe string replacement — no regex, so there's no way a Unicode char in
+  // the key can break parsing. URL-encode the key for the script src; use
+  // JSON.stringify for the inline <script> window-global value (handles
+  // quotes, backslashes, line separators U+2028/U+2029 correctly).
+  const urlSafeKey = encodeURIComponent(siteKey);
+  const jsonKey = JSON.stringify(siteKey);
 
-  const html = TEMPLATE.replace('</head>', `    ${injected}\n  </head>`);
+  const html = TEMPLATE
+    .split(SITE_KEY_PLACEHOLDER).join(urlSafeKey)
+    .split(SITE_KEY_JSON_PLACEHOLDER).join(jsonKey);
+
   return res.status(200).send(html);
 }
