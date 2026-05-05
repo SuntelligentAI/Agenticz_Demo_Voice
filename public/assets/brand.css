@@ -1,16 +1,39 @@
 :root {
-  --bg: #050505;
-  --fg: #f5f5f5;
-  --muted: #8a8a8a;
-  --line: #1a1a1a;
-  --surface: #0c0c0c;
-  --surface-hi: #121212;
-  --slash-dark: #252525;
+  /* Agenticz brand kit (selective). Existing variable names preserved so
+   * downstream rules don't have to be rewritten; values updated to kit. */
+  --bg: #0B0B0C;
+  --bg-secondary: #1A1A1C;
+  --bg-card-hover: #242427;
+  --fg: #FFFFFF;
+  --text-secondary: #CFCFD6;
+  --muted: #6B6B73;
+  --line: #2E2E33;
+  --border-light: #3A3A40;
+  --surface: #1A1A1C;
+  --surface-hi: #242427;
+  --slash-dark: #2E2E33;
   --slash-mid: #7a5500;
-  --gold: #ffb800;
-  --gold-hi: #ffc733;
+  --gold: #F5B400;
+  --gold-hi: #FFC93A;
+  --gold-deep: #C89200;
+  --gold-dim: rgba(245, 180, 0, 0.08);
+  --gold-mid: rgba(245, 180, 0, 0.35);
   --danger: #ff6b4a;
-  --radius: 6px;
+  --radius: 8px;
+  --radius-card: 12px;
+
+  /* Brand-kit-named aliases for new component code that uses them. */
+  --bg-primary: var(--bg);
+  --bg-card: var(--surface);
+  --border: var(--line);
+  --text-primary: var(--fg);
+  --text-hook: var(--fg);
+  --text-body: var(--text-secondary);
+  --text-muted: var(--muted);
+  --accent: var(--gold);
+  --accent-deep: var(--gold-deep);
+  --accent-dim: var(--gold-dim);
+  --accent-mid: var(--gold-mid);
 }
 
 * {
@@ -40,46 +63,33 @@ a {
   text-decoration: none;
 }
 
-.logo {
+/* Brand lockup — vector logo from /assets/brand/agenticz-logo-primary.svg.
+ * Backwards-compatibility: legacy markup uses class="logo"; new markup uses
+ * class="brand-lockup". Both render identically. */
+.logo,
+.brand-lockup {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
 }
 
-.slashes {
-  display: inline-flex;
-  gap: 5px;
-}
-
-.slashes span {
+.logo img,
+.brand-lockup img {
   display: block;
-  width: 8px;
-  height: 30px;
-  transform: skewX(-18deg);
-  border-radius: 2px;
+  height: 32px;
+  width: auto;
 }
 
-.slashes .s1 {
-  background: var(--slash-dark);
-}
-.slashes .s2 {
-  background: var(--slash-mid);
-}
-.slashes .s3 {
-  background: var(--gold);
-}
-
-.wordmark {
-  font-family: "Outfit", sans-serif;
-  font-weight: 600;
-  font-size: 22px;
-  letter-spacing: 0.22em;
-  color: var(--fg);
-  line-height: 1;
-}
-
-.wordmark .z {
-  color: var(--gold);
+.brand-tagline {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  line-height: 1.2;
 }
 
 .topbar {

@@ -6,8 +6,9 @@
     <meta name="robots" content="noindex, nofollow" />
     <meta name="color-scheme" content="dark" />
     <title>Web Bot — Live demo — Agenticz</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="recaptcha-site-key" content="{{RECAPTCHA_SITE_KEY}}" />
     <script src="https://www.google.com/recaptcha/api.js?render={{RECAPTCHA_SITE_KEY}}"></script>
-    <script>window.__RECAPTCHA_SITE_KEY__ = {{RECAPTCHA_SITE_KEY_JSON}};</script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -244,13 +245,8 @@
   </head>
   <body>
     <header class="topbar">
-      <a class="logo" href="/" aria-label="Agenticz — home">
-        <span class="slashes" aria-hidden="true">
-          <span class="s1"></span>
-          <span class="s2"></span>
-          <span class="s3"></span>
-        </span>
-        <span class="wordmark">AGENTIC<span class="z">Z</span></span>
+      <a class="brand-lockup" href="/" aria-label="Agenticz — home">
+        <img src="/assets/brand/agenticz-logo-primary.svg" alt="Agenticz" />
       </a>
       <div class="right">
         <a class="btn-ghost" href="/">Demos</a>

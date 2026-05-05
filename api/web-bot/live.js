@@ -18,7 +18,6 @@ try {
 }
 
 const SITE_KEY_PLACEHOLDER = '{{RECAPTCHA_SITE_KEY}}';
-const SITE_KEY_JSON_PLACEHOLDER = '{{RECAPTCHA_SITE_KEY_JSON}}';
 
 function renderUnconfiguredPage() {
   return '<!doctype html>\n'
@@ -84,15 +83,12 @@ export default function handler(req, res) {
   }
 
   // Safe string replacement — no regex, so there's no way a Unicode char in
-  // the key can break parsing. URL-encode the key for the script src; use
-  // JSON.stringify for the inline <script> window-global value (handles
-  // quotes, backslashes, line separators U+2028/U+2029 correctly).
+  // the key can break parsing. URL-encode the key for the script src and
+  // the meta tag content attribute.
   const urlSafeKey = encodeURIComponent(siteKey);
-  const jsonKey = JSON.stringify(siteKey);
 
   const html = TEMPLATE
-    .split(SITE_KEY_PLACEHOLDER).join(urlSafeKey)
-    .split(SITE_KEY_JSON_PLACEHOLDER).join(jsonKey);
+    .split(SITE_KEY_PLACEHOLDER).join(urlSafeKey);
 
   return res.status(200).send(html);
 }

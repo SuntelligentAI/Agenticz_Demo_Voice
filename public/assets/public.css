@@ -117,7 +117,7 @@ main.public > header.title-block .accent {
 .tile {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 26px 26px 24px;
   color: var(--fg);
   text-decoration: none;
@@ -126,7 +126,11 @@ main.public > header.title-block .accent {
   gap: 14px;
   min-height: 200px;
   position: relative;
-  transition: border-color 140ms ease, transform 140ms ease;
+  transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+}
+
+.tile:hover {
+  background: var(--bg-card-hover);
 }
 
 .tile:hover {
@@ -303,53 +307,84 @@ section.what-this-does li::before {
   margin-top: 24px;
 }
 
+/* Brand-kit buttons. .btn-primary is the gold-glow CTA; .btn-secondary is
+ * the gold outline; .btn-ghost is the muted nav button. Outfit font is
+ * intentional — kit overlay on the existing typographic system. */
+
 .btn-primary {
-  min-height: 46px;
-  padding: 0 22px;
-  background: var(--gold);
-  color: #050505;
-  border: none;
-  border-radius: var(--radius);
-  font-family: "Outfit", sans-serif;
-  font-weight: 600;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 700;
   font-size: 14px;
-  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  border: none;
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  transition: background 120ms ease, transform 120ms ease;
+  box-shadow: 0 0 30px rgba(245, 180, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .btn-primary:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 45px rgba(245, 180, 0, 0.55);
   background: var(--gold-hi);
 }
 
 .btn-primary:active {
-  transform: translateY(1px);
+  transform: scale(0.99);
 }
 
 .btn-secondary {
-  min-height: 46px;
-  padding: 0 22px;
   background: transparent;
-  color: var(--fg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  font-family: "Outfit", sans-serif;
-  font-weight: 500;
+  color: var(--accent);
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 700;
   font-size: 14px;
-  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  border: 2px solid var(--accent);
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  transition: border-color 120ms ease, color 120ms ease;
+  box-shadow: 0 0 20px rgba(245, 180, 0, 0.18);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-secondary:hover {
-  border-color: var(--gold);
-  color: var(--gold);
+  background: var(--accent-dim);
+  box-shadow: 0 0 30px rgba(245, 180, 0, 0.3);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--fg);
+  font-family: "Outfit", system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 14px 28px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--muted);
+  background: rgba(255, 255, 255, 0.02);
 }
 
 footer.site {

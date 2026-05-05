@@ -99,14 +99,40 @@ function loginRedirect() {
 
 function clearRetellWidgetState() {
   try {
+    // Clear all localStorage keys that could belong to the Retell widget.
+    // The widget may use various prefixes or unprefixed keys like 'chat_id'.
     const keys = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
-      if (k && (k.startsWith('retell-') || k.startsWith('retellai-'))) keys.push(k);
+      if (k && (
+        k.startsWith('retell') ||
+        k.startsWith('Retell') ||
+        k.includes('chat') ||
+        k.includes('message')
+      )) keys.push(k);
     }
     for (const k of keys) localStorage.removeItem(k);
-    if (keys.length) {
-      console.info('[web-chat] cleared widget localStorage keys:', keys);
+    // Also clear sessionStorage for the same patterns.
+    const sKeys = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const k = sessionStorage.key(i);
+      if (k && (
+        k.startsWith('retell') ||
+        k.startsWith('Retell') ||
+        k.includes('chat') ||
+        k.includes('message')
+      )) sKeys.push(k);
+    }
+    for (const k of sKeys) sessionStorage.removeItem(k);
+    // Remove any widget-injected DOM elements outside the mount point.
+    document.querySelectorAll(
+      '[id*="retell"], [class*="retell"], [id*="Retell"], [class*="Retell"]'
+    ).forEach((el) => {
+      if (!el.closest('#chat-mount')) el.remove();
+    });
+    const total = keys.length + sKeys.length;
+    if (total) {
+      console.info('[web-chat] cleared widget state:', [...keys, ...sKeys]);
     }
   } catch (e) {
     console.warn('[web-chat] failed to clear widget state:', e);
@@ -186,10 +212,10 @@ let lineEnabled = false;
 let widgetConfig = {
   chatAgentId: null,
   publicKey: null,
-  recaptchaSiteKey:
-    typeof window !== 'undefined' && typeof window.__RECAPTCHA_SITE_KEY__ === 'string'
-      ? window.__RECAPTCHA_SITE_KEY__
-      : null,
+  recaptchaSiteKey: (() => {
+    const meta = document.querySelector('meta[name="recaptcha-site-key"]');
+    return meta ? meta.getAttribute('content') || null : null;
+  })(),
 };
 
 function renderLineState() {
@@ -468,11 +494,11 @@ function refreshWidget() {
   // its own <script> element, which it locates via id="retell-widget".
   const existing = document.getElementById('retell-widget');
   if (existing) existing.remove();
+  clearRetellWidgetState();
   const script = document.createElement('script');
   script.id = 'retell-widget';
   script.src = RETELL_WIDGET_SCRIPT;
-  script.defer = true;
-  script.async = true;
+  script.type = 'module';
   script.setAttribute('data-public-key', widgetConfig.publicKey);
   script.setAttribute('data-agent-id', widgetConfig.chatAgentId);
   script.setAttribute('data-title', `Chat with ${currentStage.agentName}`);
